@@ -31,7 +31,7 @@ const App = () => {
       <Navbar />
       <div className="container">
         <Routes>
-          <Route path="/" element={<Dashboard />} />  {/* Componente Dashboard como pantalla principal */}
+          <Route path="/" element={<Dashboard />} />  
           <Route path="/productos" element={<ProductList />} />
           <Route path="/productos/agregar" element={<ProductForm />} />
           <Route path="/productos/:producto_id/editar" element={<ProductForm />} />

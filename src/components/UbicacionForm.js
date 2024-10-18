@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Form, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faArrowLeft, faFingerprint, faBuilding } from '@fortawesome/free-solid-svg-icons';
+import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
 
 const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
   const [formData, setFormData] = useState({
-    ubicacion_id: ubicacion ? ubicacion.ubicacion_id : '',  
+    ubicacion_id: ubicacion ? ubicacion.ubicacion_id : '',
     ubicacion_nombre: ubicacion ? ubicacion.ubicacion_nombre : '',
     edificio_id: ubicacion ? ubicacion.edificio_id : '',
+    ubicacion_status: ubicacion ? ubicacion.ubicacion_status : 'A',
   });
 
   const [edificios, setEdificios] = useState([]);
@@ -17,11 +18,10 @@ const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
   useEffect(() => {
     const fetchEdificios = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/edificios/');
-        const edificiosActivos = response.data.filter(edificio => edificio.edificio_status === 'A');
-        setEdificios(edificiosActivos);
+        const response = await axios.get('http://20.246.139.92/api/edificios/'); // Cambia la URL según corresponda
+        setEdificios(response.data.filter(edificio => edificio.edificio_status === 'A')); // Filtrar edificios activos
       } catch (error) {
-        console.error("Error al obtener los edificios:", error);
+        console.error('Error al obtener edificios:', error);
       }
     };
 
@@ -34,46 +34,49 @@ const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      if (!ubicacion || (ubicacion && formData.ubicacion_id !== ubicacion.ubicacion_id)) {
-        const response = await axios.get(`http://127.0.0.1:8000/ubicaciones/${formData.ubicacion_id}`);
-        if (response.status === 200) {
+      // Validar si se está editando y se intenta desactivar
+      if (ubicacion && formData.ubicacion_status === 'I') {
+        const inventariosResponse = await axios.get('http://20.246.139.92/api/inventarios/');
+        const inventarios = inventariosResponse.data;
+        const isUbicacionInInventarios = inventarios.some(inventario => inventario.ubicacion_id === ubicacion.ubicacion_id);
+
+        if (isUbicacionInInventarios) {
           Swal.fire({
             icon: 'warning',
-            title: 'ID Duplicado',
-            text: "Ya existe una ubicación con el mismo ID.",
+            title: 'Advertencia',
+            text: 'No se puede desactivar la ubicación porque está asociada a inventarios.',
           });
           return;
         }
       }
-    } catch (error) {
-      // Error esperado si la ubicación no existe
-    }
 
-    try {
+      // Guardar o actualizar la ubicación
       if (ubicacion) {
-        await axios.put(`http://127.0.0.1:8000/ubicaciones/${ubicacion.ubicacion_id}`, formData);
+        await axios.put(`http://20.246.139.92/api/ubicaciones/${ubicacion.ubicacion_id}`, formData);
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
-          text: "Ubicación actualizada exitosamente.",
+          text: 'Ubicación actualizada exitosamente.',
         });
       } else {
-        await axios.post('http://127.0.0.1:8000/ubicaciones/', formData);
+        await axios.post('http://20.246.139.92/api/ubicaciones/', formData);
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',
-          text: "Ubicación guardada exitosamente.",
+          text: 'Ubicación guardada exitosamente.',
         });
       }
-      refreshUbicaciones(); 
-      onClose(); 
+
+      refreshUbicaciones();
+      onClose();
     } catch (error) {
-      console.error("Error al guardar la ubicación:", error);
+      console.error('Error al guardar la ubicación:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: "Error al guardar la ubicación.",
+        text: 'Error al guardar la ubicación.',
       });
     }
   };
@@ -81,7 +84,7 @@ const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
   return (
     <Form onSubmit={handleSubmit}>
       <Form.Group className="mb-3">
-        <Form.Label><FontAwesomeIcon icon={faFingerprint}/> ID de la Ubicación</Form.Label>
+        <Form.Label>ID de la Ubicación</Form.Label>
         <Form.Control
           type="text"
           name="ubicacion_id"
@@ -89,7 +92,7 @@ const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
           onChange={handleChange}
           placeholder="Ingrese el ID de la ubicación"
           required
-          disabled={!!ubicacion}  
+          disabled={!!ubicacion} // Deshabilita el ID si se está editando
         />
       </Form.Group>
       <Form.Group className="mb-3">
@@ -104,14 +107,8 @@ const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
         />
       </Form.Group>
       <Form.Group className="mb-3">
-        <Form.Label><FontAwesomeIcon icon={faBuilding}/> Edificio</Form.Label>
-        <Form.Control
-          as="select"
-          name="edificio_id"
-          value={formData.edificio_id}
-          onChange={handleChange}
-          required
-        >
+        <Form.Label>Edificio</Form.Label>
+        <Form.Control as="select" name="edificio_id" value={formData.edificio_id} onChange={handleChange} required>
           <option value="">Seleccione un edificio</option>
           {edificios.map(edificio => (
             <option key={edificio.edificio_id} value={edificio.edificio_id}>
@@ -120,8 +117,15 @@ const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
           ))}
         </Form.Control>
       </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Estado</Form.Label>
+        <Form.Control as="select" name="ubicacion_status" value={formData.ubicacion_status} onChange={handleChange}>
+          <option value="A">Activo</option>
+          <option value="I">Inactivo</option>
+        </Form.Control>
+      </Form.Group>
       <Button variant="success" type="submit">
-        <FontAwesomeIcon icon={faSave} /> {ubicacion ? 'Actualizar Ubicación' : 'Guardar Ubicación'}
+        <FontAwesomeIcon icon={faSave} /> {ubicacion ? 'Actualizar' : 'Guardar'}
       </Button>
       <Button variant="secondary" className="ms-2" onClick={onClose}>
         <FontAwesomeIcon icon={faArrowLeft} /> Volver

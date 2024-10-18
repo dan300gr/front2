@@ -2,152 +2,140 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Table, Modal, Form, Dropdown } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faToggleOn, faToggleOff, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
-import Swal from 'sweetalert2'; // Importar SweetAlert2
-import InventarioForm from './InventarioForm'; // Importamos el formulario para usarlo en el modal
+import { faEdit, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
+import InventarioForm from './InventarioForm'; // Asegúrate de crear este formulario también
 
 const InventarioList = () => {
   const [inventarios, setInventarios] = useState([]);
-  const [showModal, setShowModal] = useState(false); // Estado para el modal
-  const [editingInventario, setEditingInventario] = useState(null); // Estado para editar inventario
-  const [searchTerm, setSearchTerm] = useState(''); // Estado para el buscador
-  const [sortBy, setSortBy] = useState(''); // Estado para el ordenamiento
-  const [filterStatus, setFilterStatus] = useState('todos'); // Estado para el filtro de estado
-  const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
-  const [itemsPerPage] = useState(10); // Número de elementos por página
-  const [ubicaciones, setUbicaciones] = useState([]); // Estado para las ubicaciones
-  const [productos, setProductos] = useState([]); // Estado para los productos
-
+  const [productos, setProductos] = useState([]);
+  const [ubicaciones, setUbicaciones] = useState([]);
+  const [stocks, setStocks] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingInventario, setEditingInventario] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('todos');
+  const [sortBy, setSortBy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  
   useEffect(() => {
     fetchInventarios();
-    fetchUbicaciones();
     fetchProductos();
+    fetchUbicaciones();
+    fetchStocks();
   }, []);
 
   const fetchInventarios = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/inventarios/');
-      setInventarios(response.data); // Obtener todos los inventarios
+      const response = await axios.get('http://20.246.139.92/api/inventarios/');
+      setInventarios(response.data);
     } catch (error) {
       console.error('Error al obtener los inventarios:', error);
     }
   };
 
-  const fetchUbicaciones = async () => {
-    try {
-      const response = await axios.get('http://127.0.0.1:8000/ubicaciones/');
-      const ubicacionesActivas = response.data.filter(ubicacion => ubicacion.ubicacion_status === 'A'); // Filtrar ubicaciones activas
-      setUbicaciones(ubicacionesActivas); // Cargar ubicaciones activas
-    } catch (error) {
-      console.error('Error al obtener las ubicaciones:', error);
-    }
-  };
-
   const fetchProductos = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/productos/');
-      const productosActivos = response.data.filter(producto => producto.producto_status === 'A'); // Filtrar productos activos
-      setProductos(productosActivos); // Cargar productos activos
+      const response = await axios.get('http://20.246.139.92/api/productos/');
+      const activos = response.data.filter(producto => producto.producto_status === 'A');
+      setProductos(activos);
     } catch (error) {
       console.error('Error al obtener los productos:', error);
     }
   };
 
-  const formatDateTime = (datetime) => {
-    const date = new Date(datetime);
-    return date.toLocaleString();  // Formatear la fecha y hora
+  const fetchUbicaciones = async () => {
+    try {
+      const response = await axios.get('http://20.246.139.92/api/ubicaciones/');
+      const activos = response.data.filter(ubicacion => ubicacion.ubicacion_status === 'A');
+      setUbicaciones(activos);
+    } catch (error) {
+      console.error('Error al obtener las ubicaciones:', error);
+    }
   };
 
-  const toggleInventario = async (inventario) => {
+  const fetchStocks = async () => {
     try {
-      if (inventario.inventario_status === 'A') {
-        await axios.put(`http://127.0.0.1:8000/inventarios/${inventario.inventario_id}/desactivar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Inventario desactivado',
-          text: 'El inventario ha sido desactivado exitosamente.',
-        });
-      } else {
-        await axios.put(`http://127.0.0.1:8000/inventarios/${inventario.inventario_id}/activar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Inventario activado',
-          text: 'El inventario ha sido activado exitosamente.',
-        });
-      }
-      fetchInventarios(); // Recargar la lista de inventarios
+      const response = await axios.get('http://20.246.139.92/api/stocks/');
+      const activos = response.data.filter(stock => stock.stock_status === 'A');
+      setStocks(activos);
     } catch (error) {
-      console.error('Error al cambiar el estado del inventario:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo cambiar el estado del inventario.',
-      });
+      console.error('Error al obtener los stocks:', error);
     }
   };
 
   const handleEdit = (inventario) => {
-    setEditingInventario(inventario); // Establecer el inventario en edición
-    setShowModal(true); // Mostrar el modal para editar
+    setEditingInventario(inventario);
+    setShowModal(true);
   };
 
-  const handleAddInventario = () => {
-    setEditingInventario(null); // Limpiar el formulario para agregar
-    setShowModal(true); // Mostrar el modal para agregar
+  const handleShowModal = () => {
+    setEditingInventario(null);
+    setShowModal(true);
   };
 
-  const handleCloseModal = () => setShowModal(false); // Cerrar el modal
+  const handleCloseModal = () => setShowModal(false);
 
-  // Filtrar inventarios según el término de búsqueda y el estado
-  const filteredInventarios = inventarios.filter(inventario =>
-    inventario.inventario_id.toString().includes(searchTerm) &&
-    (filterStatus === 'todos' || inventario.inventario_status === filterStatus)
-  );
+  const handleDelete = async (inventario_id) => {
+    try {
+      await axios.delete(`http://20.246.139.92/api/inventarios/${inventario_id}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Inventario eliminado',
+        text: 'El inventario ha sido eliminado exitosamente.',
+      });
+      fetchInventarios();
+    } catch (error) {
+      console.error('Error al eliminar el inventario:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo eliminar el inventario.',
+      });
+    }
+  };
 
-  // Ordenar inventarios
+  const filteredInventarios = inventarios.filter((inventario) => {
+    const producto = productos.find(p => p.producto_id === inventario.producto_id);
+    const ubicacion = ubicaciones.find(u => u.ubicacion_id === inventario.ubicacion_id);
+    const nombreProducto = producto ? producto.producto_nombre : '';
+    const nombreUbicacion = ubicacion ? ubicacion.ubicacion_nombre : '';
+    const nameMatch = nombreProducto.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                      nombreUbicacion.toLowerCase().includes(searchTerm.toLowerCase());
+    const statusMatch = filterStatus === 'todos' || inventario.inventario_status === filterStatus;
+    return nameMatch && statusMatch;
+  });
+
   const sortedInventarios = [...filteredInventarios].sort((a, b) => {
+    const productoA = productos.find(p => p.producto_id === a.producto_id);
+    const productoB = productos.find(p => p.producto_id === b.producto_id);
+    const nombreA = productoA ? productoA.producto_nombre : '';
+    const nombreB = productoB ? productoB.producto_nombre : '';
+    
     if (sortBy === 'nombreAsc') {
-      return a.inventario_id - b.inventario_id; // Ordenar por ID de inventario
+      return nombreA.localeCompare(nombreB);
     } else if (sortBy === 'nombreDesc') {
-      return b.inventario_id - a.inventario_id;
-    } else if (sortBy === 'ubicacionAsc') {
-      return ubicaciones.find(u => u.ubicacion_id === a.ubicacion_id)?.ubicacion_nombre.localeCompare(
-        ubicaciones.find(u => u.ubicacion_id === b.ubicacion_id)?.ubicacion_nombre
-      ) || 0;
-    } else if (sortBy === 'ubicacionDesc') {
-      return ubicaciones.find(u => u.ubicacion_id === b.ubicacion_id)?.ubicacion_nombre.localeCompare(
-        ubicaciones.find(u => u.ubicacion_id === a.ubicacion_id)?.ubicacion_nombre
-      ) || 0;
-    } else if (sortBy === 'productoAsc') {
-      return productos.find(p => p.producto_id === a.producto_id)?.producto_nombre.localeCompare(
-        productos.find(p => p.producto_id === b.producto_id)?.producto_nombre
-      ) || 0;
-    } else if (sortBy === 'productoDesc') {
-      return productos.find(p => p.producto_id === b.producto_id)?.producto_nombre.localeCompare(
-        productos.find(p => p.producto_id === a.producto_id)?.producto_nombre
-      ) || 0;
+      return nombreB.localeCompare(nombreA);
     }
     return 0;
   });
 
-  // Paginación
   const indexOfLastInventario = currentPage * itemsPerPage;
   const indexOfFirstInventario = indexOfLastInventario - itemsPerPage;
   const currentInventarios = sortedInventarios.slice(indexOfFirstInventario, indexOfLastInventario);
-
   const totalPages = Math.ceil(sortedInventarios.length / itemsPerPage);
 
   return (
     <div className="container">
       <div className="d-flex justify-content-between align-items-center my-4">
         <h1>Lista de Inventarios</h1>
-        <Button variant="success" onClick={handleAddInventario}>
+        <Button variant="success" onClick={handleShowModal}>
           <FontAwesomeIcon icon={faPlus} /> Agregar Inventario
         </Button>
       </div>
 
       <div className="d-flex mb-3 justify-content-between">
-        {/* Filtro por estado */}
         <Form.Check
           type="radio"
           label="Mostrar todos"
@@ -173,11 +161,10 @@ const InventarioList = () => {
           checked={filterStatus === 'I'}
         />
 
-        {/* Buscador a la derecha */}
         <div style={{ position: 'relative', width: '200px' }}>
           <Form.Control
             type="text"
-            placeholder="Buscar inventario"
+            placeholder="Buscar"
             style={{ height: '38px' }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -189,7 +176,6 @@ const InventarioList = () => {
       </div>
 
       <div className="d-flex mb-3 justify-content-start">
-        {/* Ordenar con icono de filtro */}
         <Dropdown>
           <Dropdown.Toggle variant="outline-secondary" id="dropdown-basic" className="d-flex align-items-center">
             <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
@@ -197,12 +183,8 @@ const InventarioList = () => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu>
-            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>ID Ascendente</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>ID Descendente</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('ubicacionAsc')}>Ubicación A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('ubicacionDesc')}>Ubicación Z-A</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('productoAsc')}>Producto A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('productoDesc')}>Producto Z-A</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>Producto A-Z</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>Producto Z-A</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
       </div>
@@ -211,93 +193,74 @@ const InventarioList = () => {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Ubicación</th>
             <th>Producto</th>
+            <th>Ubicación</th>
+            <th>Stock</th>
             <th>Cantidad</th>
             <th>Estado</th>
-            <th>Fecha Modificación</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {currentInventarios.map((inventario) => (
-            <tr key={inventario.inventario_id}>
-              <td>{inventario.inventario_id}</td>
-              <td>{ubicaciones.find(u => u.ubicacion_id === inventario.ubicacion_id)?.ubicacion_nombre || 'Sin Ubicación'}</td>
-              <td>{productos.find(p => p.producto_id === inventario.producto_id)?.producto_nombre || 'Sin Producto'}</td>
-              <td>{inventario.inventario_cantidad}</td>
-              <td>{inventario.inventario_status === 'A' ? 'Activo' : 'Inactivo'}</td>
-              <td>{formatDateTime(inventario.inventario_fecha_modificacion)}</td>
-              <td>
-                <Button variant="info" onClick={() => handleEdit(inventario)}>
-                  <FontAwesomeIcon icon={faEdit} /> Editar
-                </Button>{' '}
-                <Button
-                  variant={inventario.inventario_status === 'A' ? 'danger' : 'success'}
-                  onClick={() => toggleInventario(inventario)}
-                >
-                  <FontAwesomeIcon icon={inventario.inventario_status === 'A' ? faToggleOff : faToggleOn} />
-                  {' '}
-                  {inventario.inventario_status === 'A' ? 'Desactivar' : 'Activar'}
-                </Button>
-              </td>
-            </tr>
-          ))}
+          {currentInventarios.map((inventario) => {
+            const producto = productos.find(p => p.producto_id === inventario.producto_id);
+            const ubicacion = ubicaciones.find(u => u.ubicacion_id === inventario.ubicacion_id);
+            const stock = stocks.find(s => s.stock_id === inventario.stock_id);
+            const nombreProducto = producto ? producto.producto_nombre : 'Desconocido';
+            const nombreUbicacion = ubicacion ? ubicacion.ubicacion_nombre : 'Desconocida';
+            const nombreStock = stock ? stock.stock_id : 'Desconocido'; // Agrega el manejo de nombres desconocidos
+
+            return (
+              <tr key={inventario.inventario_id}>
+                <td>{inventario.inventario_id}</td>
+                <td>{nombreProducto}</td>
+                <td>{nombreUbicacion}</td>
+                <td>{nombreStock}</td>
+                <td>{inventario.inventario_cantidad}</td>
+                <td>{inventario.inventario_status === 'A' ? 'Activo' : 'Inactivo'}</td>
+                <td>
+                  <Button variant="info" onClick={() => handleEdit(inventario)}>
+                    <FontAwesomeIcon icon={faEdit} />
+                  </Button>
+                  <Button variant="danger" onClick={() => handleDelete(inventario.inventario_id)}>
+                    Eliminar
+                  </Button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </Table>
 
-      {/* Paginación */}
-      <nav style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-        <ul className="pagination">
-          <li className="page-item">
-            <Button
-              className="page-link"
-              onClick={() => setCurrentPage(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              &laquo;
-            </Button>
-          </li>
-          {Array.from({ length: Math.min(3, totalPages) }).map((_, index) => {
-            const pageNumber = index + Math.max(currentPage - 1, 1);
-            if (pageNumber <= totalPages) {
-              return (
-                <li key={pageNumber} className="page-item">
-                  <Button
-                    onClick={() => setCurrentPage(pageNumber)}
-                    className="page-link"
-                  >
-                    {pageNumber}
-                  </Button>
-                </li>
-              );
-            }
-            return null;
-          })}
-          <li className="page-item">
-            <Button
-              className="page-link"
-              onClick={() => setCurrentPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              &raquo;
-            </Button>
-          </li>
-        </ul>
-      </nav>
+      <div className="d-flex justify-content-between">
+        <Button 
+          variant="primary" 
+          disabled={currentPage === 1} 
+          onClick={() => setCurrentPage(currentPage - 1)}
+        >
+          Anterior
+        </Button>
+        <Button 
+          variant="primary" 
+          disabled={currentPage === totalPages} 
+          onClick={() => setCurrentPage(currentPage + 1)}
+        >
+          Siguiente
+        </Button>
+      </div>
 
-      {/* Modal para agregar o editar inventario */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>{editingInventario ? 'Editar Inventario' : 'Agregar Inventario'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <InventarioForm
-            inventario={editingInventario}
-            onClose={handleCloseModal}
-            refreshInventarios={fetchInventarios}
-            ubicaciones={ubicaciones}
+          <InventarioForm 
+            inventario={editingInventario} 
+            onClose={handleCloseModal} 
+            onSave={fetchInventarios} 
             productos={productos}
+            ubicaciones={ubicaciones}
+            stocks={stocks}
           />
         </Modal.Body>
       </Modal>

@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Table, Modal, Form, Dropdown } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faToggleOn, faToggleOff, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
-import Swal from 'sweetalert2'; // Importar SweetAlert2
-import EdificioForm from './EdificioForm'; // Importamos el formulario para usarlo en el modal
+import { faEdit, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
+import EdificioForm from './EdificioForm';
 
 const EdificioList = () => {
   const [edificios, setEdificios] = useState([]);
-  const [showModal, setShowModal] = useState(false); // Estado para el modal
-  const [editingEdificio, setEditingEdificio] = useState(null); // Estado para editar edificio
-  const [searchTerm, setSearchTerm] = useState(''); // Estado para el buscador
-  const [sortBy, setSortBy] = useState(''); // Estado para el ordenamiento
-  const [filterStatus, setFilterStatus] = useState('todos'); // Estado para el filtro de estado
-  const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
-  const [itemsPerPage] = useState(10); // Número de elementos por página
+  const [showModal, setShowModal] = useState(false);
+  const [editingEdificio, setEditingEdificio] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('todos');
+  const [sortBy, setSortBy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchEdificios();
@@ -22,96 +22,88 @@ const EdificioList = () => {
 
   const fetchEdificios = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/edificios/');
-      setEdificios(response.data); // Asegurarnos de que obtenemos tanto los activos como los inactivos
+      const response = await axios.get('http://20.246.139.92/api/edificios/');
+      setEdificios(response.data);
     } catch (error) {
       console.error('Error al obtener los edificios:', error);
     }
   };
 
-  const formatDateTime = (datetime) => {
-    const date = new Date(datetime);
-    return date.toLocaleString();  // Formatear a cadena legible
+  const handleEdit = (edificio) => {
+    setEditingEdificio(edificio);
+    setShowModal(true);
   };
 
-  const toggleEdificio = async (edificio) => {
+  const handleShowModal = () => {
+    setEditingEdificio(null);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => setShowModal(false);
+
+  const handleDelete = async (edificio_id) => {
     try {
-      if (edificio.edificio_status === 'A') {
-        await axios.put(`http://127.0.0.1:8000/edificios/${edificio.edificio_id}/desactivar`);
+      // Comprobar si el edificio está asociado a alguna ubicación
+      const ubicacionesResponse = await axios.get('http://20.246.139.92/api/ubicaciones/');
+      const ubicaciones = ubicacionesResponse.data;
+      const isEdificioInUbicaciones = ubicaciones.some(ubicacion => ubicacion.edificio_id === edificio_id);
+      
+      if (isEdificioInUbicaciones) {
         Swal.fire({
-          icon: 'success',
-          title: 'Edificio desactivado',
-          text: 'El edificio ha sido desactivado exitosamente.',
+          icon: 'warning',
+          title: 'Advertencia',
+          text: 'No se puede eliminar el edificio porque está asociado a una ubicación.',
         });
-      } else {
-        await axios.put(`http://127.0.0.1:8000/edificios/${edificio.edificio_id}/activar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Edificio activado',
-          text: 'El edificio ha sido activado exitosamente.',
-        });
+        return;
       }
-      fetchEdificios(); // Recargar la lista de edificios
+
+      await axios.delete(`http://20.246.139.92/api/edificios/${edificio_id}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Edificio eliminado',
+        text: 'El edificio ha sido eliminado exitosamente.',
+      });
+      fetchEdificios();
     } catch (error) {
-      console.error('Error al cambiar el estado del edificio:', error);
+      console.error('Error al eliminar el edificio:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo cambiar el estado del edificio.',
+        text: 'No se pudo eliminar el edificio.',
       });
     }
   };
 
-  const handleEdit = (edificio) => {
-    setEditingEdificio(edificio); // Establecer el edificio en edición
-    setShowModal(true); // Mostrar el modal para editar
-  };
+  const filteredEdificios = edificios.filter((edificio) => {
+    const nameMatch = edificio.edificio_nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    const statusMatch = filterStatus === 'todos' || edificio.edificio_status === filterStatus;
+    return nameMatch && statusMatch;
+  });
 
-  const handleAddEdificio = () => {
-    setEditingEdificio(null); // Limpiar el formulario para agregar
-    setShowModal(true); // Mostrar el modal para agregar
-  };
-
-  const handleCloseModal = () => setShowModal(false); // Cerrar el modal
-
-  // Filtrar edificios según el término de búsqueda y el estado
-  const filteredEdificios = edificios.filter(edificio =>
-    edificio.edificio_nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (filterStatus === 'todos' || edificio.edificio_status === filterStatus)
-  );
-
-  // Ordenar edificios
   const sortedEdificios = [...filteredEdificios].sort((a, b) => {
     if (sortBy === 'nombreAsc') {
       return a.edificio_nombre.localeCompare(b.edificio_nombre);
     } else if (sortBy === 'nombreDesc') {
       return b.edificio_nombre.localeCompare(a.edificio_nombre);
-    } else if (sortBy === 'direccionAsc') {
-      return a.edificio_direccion.localeCompare(b.edificio_direccion);
-    } else if (sortBy === 'direccionDesc') {
-      return b.edificio_direccion.localeCompare(a.edificio_direccion);
     }
     return 0;
   });
 
-  // Paginación
   const indexOfLastEdificio = currentPage * itemsPerPage;
   const indexOfFirstEdificio = indexOfLastEdificio - itemsPerPage;
   const currentEdificios = sortedEdificios.slice(indexOfFirstEdificio, indexOfLastEdificio);
-
   const totalPages = Math.ceil(sortedEdificios.length / itemsPerPage);
 
   return (
     <div className="container">
       <div className="d-flex justify-content-between align-items-center my-4">
         <h1>Lista de Edificios</h1>
-        <Button variant="success" onClick={handleAddEdificio}>
+        <Button variant="success" onClick={handleShowModal}>
           <FontAwesomeIcon icon={faPlus} /> Agregar Edificio
         </Button>
       </div>
 
       <div className="d-flex mb-3 justify-content-between">
-        {/* Filtro por estado */}
         <Form.Check
           type="radio"
           label="Mostrar todos"
@@ -137,11 +129,10 @@ const EdificioList = () => {
           checked={filterStatus === 'I'}
         />
 
-        {/* Buscador a la derecha */}
         <div style={{ position: 'relative', width: '200px' }}>
           <Form.Control
             type="text"
-            placeholder="Buscar edificio"
+            placeholder="Buscar"
             style={{ height: '38px' }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -153,7 +144,6 @@ const EdificioList = () => {
       </div>
 
       <div className="d-flex mb-3 justify-content-start">
-        {/* Ordenar con icono de filtro */}
         <Dropdown>
           <Dropdown.Toggle variant="outline-secondary" id="dropdown-basic" className="d-flex align-items-center">
             <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
@@ -161,10 +151,8 @@ const EdificioList = () => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu>
-            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>Nombre A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>Nombre Z-A</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('direccionAsc')}>Dirección A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('direccionDesc')}>Dirección Z-A</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>Edificio A-Z</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>Edificio Z-A</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
       </div>
@@ -176,7 +164,6 @@ const EdificioList = () => {
             <th>Nombre</th>
             <th>Dirección</th>
             <th>Estado</th>
-            <th>Fecha Modificación</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -187,18 +174,15 @@ const EdificioList = () => {
               <td>{edificio.edificio_nombre}</td>
               <td>{edificio.edificio_direccion}</td>
               <td>{edificio.edificio_status === 'A' ? 'Activo' : 'Inactivo'}</td>
-              <td>{formatDateTime(edificio.edificio_fecha_modificacion)}</td> {/* Mostrar fecha y hora de modificación */}
               <td>
                 <Button variant="info" onClick={() => handleEdit(edificio)}>
                   <FontAwesomeIcon icon={faEdit} /> Editar
                 </Button>{' '}
                 <Button
-                  variant={edificio.edificio_status === 'A' ? 'danger' : 'success'}
-                  onClick={() => toggleEdificio(edificio)}
+                  variant="danger"
+                  onClick={() => handleDelete(edificio.edificio_id)}
                 >
-                  <FontAwesomeIcon icon={edificio.edificio_status === 'A' ? faToggleOff : faToggleOn} />
-                  {' '}
-                  {edificio.edificio_status === 'A' ? 'Desactivar' : 'Activar'}
+                  Eliminar
                 </Button>
               </td>
             </tr>
@@ -206,7 +190,6 @@ const EdificioList = () => {
         </tbody>
       </Table>
 
-      {/* Paginación */}
       <nav style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
         <ul className="pagination">
           <li className="page-item">
@@ -243,17 +226,12 @@ const EdificioList = () => {
         </ul>
       </nav>
 
-      {/* Modal para agregar o editar edificio */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>{editingEdificio ? 'Editar Edificio' : 'Agregar Edificio'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <EdificioForm
-            edificio={editingEdificio}
-            onClose={handleCloseModal}
-            refreshEdificios={fetchEdificios} // Refrescar la lista después de agregar/editar
-          />
+          <EdificioForm edificio={editingEdificio} onClose={handleCloseModal} refreshEdificios={fetchEdificios} />
         </Modal.Body>
       </Modal>
     </div>
@@ -261,4 +239,5 @@ const EdificioList = () => {
 };
 
 export default EdificioList;
+
 

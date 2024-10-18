@@ -2,24 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Table, Modal, Form, Dropdown } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faToggleOn, faToggleOff, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
-import Swal from 'sweetalert2'; // Para alertas
-import ProveedorForm from './ProveedorForm'; // Importar el formulario de proveedor
+import { faEdit, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
+import ProveedorForm from './ProveedorForm';
 
 const ProveedorList = () => {
   const [proveedores, setProveedores] = useState([]);
-  const [showModal, setShowModal] = useState(false); // Estado para el modal
-  const [editingProveedor, setEditingProveedor] = useState(null); // Estado para editar proveedor
-  const [searchTerm, setSearchTerm] = useState(''); // Estado para el buscador
-  const [sortBy, setSortBy] = useState(''); // Estado para el ordenamiento
-  const [filterStatus, setFilterStatus] = useState('todos'); // Filtro por estado (activos, inactivos)
-  const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
-  const [itemsPerPage] = useState(10); // Número de elementos por página
-
-  const formatDateTime = (datetime) => {
-    const date = new Date(datetime);
-    return date.toLocaleString();  // Formatear a cadena legible
-  };
+  const [showModal, setShowModal] = useState(false);
+  const [editingProveedor, setEditingProveedor] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('todos');
+  const [sortBy, setSortBy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchProveedores();
@@ -27,78 +22,59 @@ const ProveedorList = () => {
 
   const fetchProveedores = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/proveedores/');
+      const response = await axios.get('http://20.246.139.92/api/proveedores/');
       setProveedores(response.data);
     } catch (error) {
       console.error('Error al obtener los proveedores:', error);
     }
   };
 
-  const toggleProveedor = async (proveedor) => {
+  const handleEdit = (proveedor) => {
+    setEditingProveedor(proveedor);
+    setShowModal(true);
+  };
+
+  const handleShowModal = () => {
+    setEditingProveedor(null);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => setShowModal(false);
+
+  const handleDelete = async (proveedor_id) => {
     try {
-      if (proveedor.proveedor_status === 'A') {
-        await axios.put(`http://127.0.0.1:8000/proveedores/${proveedor.proveedor_id}/desactivar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Proveedor desactivado',
-          text: 'El proveedor ha sido desactivado exitosamente.',
-        });
-      } else {
-        await axios.put(`http://127.0.0.1:8000/proveedores/${proveedor.proveedor_id}/activar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Proveedor activado',
-          text: 'El proveedor ha sido activado exitosamente.',
-        });
-      }
-      fetchProveedores(); // Recargar la lista de proveedores
+      await axios.delete(`http://20.246.139.92/api/proveedores/${proveedor_id}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Proveedor eliminado',
+        text: 'El proveedor ha sido eliminado exitosamente.',
+      });
+      fetchProveedores();
     } catch (error) {
-      console.error('Error al cambiar el estado del proveedor:', error);
+      console.error('Error al eliminar el proveedor:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo cambiar el estado del proveedor.',
+        text: 'No se pudo eliminar el proveedor.',
       });
     }
   };
 
-  const handleEdit = (proveedor) => {
-    setEditingProveedor(proveedor); // Establecer el proveedor en edición
-    setShowModal(true); // Mostrar el modal para editar
-  };
+  const filteredProveedores = proveedores.filter((proveedor) => {
+    const nameMatch = proveedor.proveedor_nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    const statusMatch = filterStatus === 'todos' || proveedor.proveedor_status === filterStatus;
+    return nameMatch && statusMatch;
+  });
 
-  const handleAddProveedor = () => {
-    setEditingProveedor(null); // Limpiar el formulario para agregar
-    setShowModal(true); // Mostrar el modal para agregar
-  };
-
-  const handleCloseModal = () => setShowModal(false); // Cerrar el modal
-
-  // Filtrar proveedores según el término de búsqueda y el estado
-  const filteredProveedores = proveedores.filter(proveedor =>
-    proveedor.proveedor_nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (filterStatus === 'todos' || proveedor.proveedor_status === filterStatus)
-  );
-
-  // Ordenar proveedores
   const sortedProveedores = [...filteredProveedores].sort((a, b) => {
     if (sortBy === 'nombreAsc') {
       return a.proveedor_nombre.localeCompare(b.proveedor_nombre);
     } else if (sortBy === 'nombreDesc') {
       return b.proveedor_nombre.localeCompare(a.proveedor_nombre);
-    } else if (sortBy === 'direccionAsc') {
-      return a.proveedor_direccion.localeCompare(b.proveedor_direccion);
-    } else if (sortBy === 'direccionDesc') {
-      return b.proveedor_direccion.localeCompare(a.proveedor_direccion);
-    } else if (sortBy === 'correoAsc') {
-      return a.proveedor_correo.localeCompare(b.proveedor_correo);
-    } else if (sortBy === 'correoDesc') {
-      return b.proveedor_correo.localeCompare(a.proveedor_correo);
     }
     return 0;
   });
 
-  // Paginación
   const indexOfLastProveedor = currentPage * itemsPerPage;
   const indexOfFirstProveedor = indexOfLastProveedor - itemsPerPage;
   const currentProveedores = sortedProveedores.slice(indexOfFirstProveedor, indexOfLastProveedor);
@@ -108,7 +84,7 @@ const ProveedorList = () => {
     <div className="container">
       <div className="d-flex justify-content-between align-items-center my-4">
         <h1>Lista de Proveedores</h1>
-        <Button variant="success" onClick={handleAddProveedor}>
+        <Button variant="success" onClick={handleShowModal}>
           <FontAwesomeIcon icon={faPlus} /> Agregar Proveedor
         </Button>
       </div>
@@ -142,7 +118,7 @@ const ProveedorList = () => {
         <div style={{ position: 'relative', width: '200px' }}>
           <Form.Control
             type="text"
-            placeholder="Buscar proveedor"
+            placeholder="Buscar"
             style={{ height: '38px' }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -161,12 +137,8 @@ const ProveedorList = () => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu>
-            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>Nombre A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>Nombre Z-A</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('direccionAsc')}>Dirección A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('direccionDesc')}>Dirección Z-A</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('correoAsc')}>Correo A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('correoDesc')}>Correo Z-A</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>Proveedor A-Z</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>Proveedor Z-A</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
       </div>
@@ -176,36 +148,25 @@ const ProveedorList = () => {
           <tr>
             <th>ID</th>
             <th>Nombre</th>
-            <th>Dirección</th>
-            <th>Teléfono</th>
-            <th>Correo</th>
             <th>Estado</th>
-            <th>Fecha Modificación</th>
             <th>Acciones</th>
           </tr>
         </thead>
-        
         <tbody>
           {currentProveedores.map((proveedor) => (
             <tr key={proveedor.proveedor_id}>
               <td>{proveedor.proveedor_id}</td>
               <td>{proveedor.proveedor_nombre}</td>
-              <td>{proveedor.proveedor_direccion}</td>
-              <td>{proveedor.proveedor_telefono}</td>
-              <td>{proveedor.proveedor_correo}</td>
               <td>{proveedor.proveedor_status === 'A' ? 'Activo' : 'Inactivo'}</td>
-              <td>{formatDateTime(proveedor.proveedor_fecha_modificacion)}</td> {/* Mostrar fecha y hora de modificación */}
               <td>
                 <Button variant="info" onClick={() => handleEdit(proveedor)}>
                   <FontAwesomeIcon icon={faEdit} /> Editar
                 </Button>{' '}
                 <Button
-                  variant={proveedor.proveedor_status === 'A' ? 'danger' : 'success'}
-                  onClick={() => toggleProveedor(proveedor)}
+                  variant="danger"
+                  onClick={() => handleDelete(proveedor.proveedor_id)}
                 >
-                  <FontAwesomeIcon icon={proveedor.proveedor_status === 'A' ? faToggleOff : faToggleOn} />
-                  {' '}
-                  {proveedor.proveedor_status === 'A' ? 'Desactivar' : 'Activar'}
+                  Eliminar
                 </Button>
               </td>
             </tr>
@@ -254,11 +215,7 @@ const ProveedorList = () => {
           <Modal.Title>{editingProveedor ? 'Editar Proveedor' : 'Agregar Proveedor'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <ProveedorForm
-            proveedor={editingProveedor}
-            onClose={handleCloseModal}
-            refreshProveedores={fetchProveedores}
-          />
+          <ProveedorForm proveedor={editingProveedor} onClose={handleCloseModal} refreshProveedores={fetchProveedores} />
         </Modal.Body>
       </Modal>
     </div>
@@ -266,4 +223,3 @@ const ProveedorList = () => {
 };
 
 export default ProveedorList;
-

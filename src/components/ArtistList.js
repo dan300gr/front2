@@ -2,114 +2,108 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Table, Modal, Form, Dropdown } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faToggleOn, faToggleOff, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
-import ArtistForm from './ArtistForm'; // Importar el formulario para usarlo en el modal
-import Swal from 'sweetalert2'; // Importar SweetAlert2
+import { faEdit, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
+import ArtistForm from './ArtistForm';
 
 const ArtistList = () => {
-  const [artistas, setArtistas] = useState([]);
-  const [showModal, setShowModal] = useState(false); // Estado para el modal
-  const [editingArtista, setEditingArtista] = useState(null); // Estado para editar artista
-  const [searchTerm, setSearchTerm] = useState(''); // Estado para el buscador
-  const [filterStatus, setFilterStatus] = useState('todos'); // Estado para el filtro de estado
-  const [sortBy, setSortBy] = useState(''); // Estado para el ordenamiento
-  const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
-  const [itemsPerPage] = useState(10); // Número de elementos por página
-
-  const formatDateTime = (datetime) => {
-    const date = new Date(datetime);
-    return date.toLocaleString();  // Formatear a cadena legible
-  };
+  const [artists, setArtists] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingArtist, setEditingArtist] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('todos');
+  const [sortBy, setSortBy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
-    fetchArtistas();
+    fetchArtists();
   }, []);
 
-  const fetchArtistas = async () => {
+  const fetchArtists = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/artistas/');
-      setArtistas(response.data); // Asegurarnos de que obtenemos tanto los activos como los inactivos
+      const response = await axios.get('http://20.246.139.92/api/artistas/');
+      setArtists(response.data);
     } catch (error) {
       console.error('Error al obtener los artistas:', error);
     }
   };
 
-  const toggleArtista = async (artista) => {
+  const handleEdit = (artist) => {
+    setEditingArtist(artist);
+    setShowModal(true);
+  };
+
+  const handleShowModal = () => {
+    setEditingArtist(null);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => setShowModal(false);
+
+  const handleDelete = async (artista_id) => {
     try {
-      if (artista.artista_status === 'A') {
-        await axios.put(`http://127.0.0.1:8000/artistas/${artista.artista_id}/desactivar`);
+      // Comprobar si el artista está asociado a algún álbum
+      const albumsResponse = await axios.get('http://20.246.139.92/api/albumes/');
+      const albums = albumsResponse.data;
+      const isArtistInAlbums = albums.some(album => album.artista_id === artista_id);
+      
+      if (isArtistInAlbums) {
         Swal.fire({
-          icon: 'success',
-          title: 'Artista desactivado',
-          text: 'El artista ha sido desactivado exitosamente.',
+          icon: 'warning',
+          title: 'Advertencia',
+          text: 'No se puede eliminar a un artista que está asociado a un álbum.',
         });
-      } else {
-        await axios.put(`http://127.0.0.1:8000/artistas/${artista.artista_id}/activar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Artista activado',
-          text: 'El artista ha sido activado exitosamente.',
-        });
+        return;
       }
-      fetchArtistas(); // Recargar la lista de artistas
+
+      await axios.delete(`http://20.246.139.92/api/artistas/${artista_id}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Artista eliminado',
+        text: 'El artista ha sido eliminado exitosamente.',
+      });
+      fetchArtists();
     } catch (error) {
-      console.error('Error al cambiar el estado del artista:', error);
-      const errorMessage = error.response && error.response.data && error.response.data.detail
-        ? error.response.data.detail
-        : 'No se pudo cambiar el estado del artista.';
+      console.error('Error al eliminar el artista:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: errorMessage,
+        text: 'No se pudo eliminar el artista.',
       });
     }
   };
 
-  const handleEdit = (artista) => {
-    setEditingArtista(artista); // Establecer el artista en edición
-    setShowModal(true); // Mostrar el modal para editar
-  };
+  const filteredArtists = artists.filter((artist) => {
+    const nameMatch = artist.artista_nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    const statusMatch = filterStatus === 'todos' || artist.artista_status === filterStatus;
+    return nameMatch && statusMatch;
+  });
 
-  const handleAddArtista = () => {
-    setEditingArtista(null); // Limpiar el formulario para agregar
-    setShowModal(true); // Mostrar el modal para agregar
-  };
-
-  const handleCloseModal = () => setShowModal(false); // Cerrar el modal
-
-  // Filtrar artistas según el término de búsqueda y el estado
-  const filteredArtistas = artistas.filter(artista =>
-    artista.artista_nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (filterStatus === 'todos' || artista.artista_status === filterStatus)
-  );
-
-  // Ordenar artistas
-  const sortedArtistas = [...filteredArtistas].sort((a, b) => {
-    if (sortBy === 'artistAsc') {
+  const sortedArtists = [...filteredArtists].sort((a, b) => {
+    if (sortBy === 'nombreAsc') {
       return a.artista_nombre.localeCompare(b.artista_nombre);
-    } else if (sortBy === 'artistDesc') {
+    } else if (sortBy === 'nombreDesc') {
       return b.artista_nombre.localeCompare(a.artista_nombre);
     }
     return 0;
   });
 
-  // Paginación
-  const indexOfLastArtista = currentPage * itemsPerPage;
-  const indexOfFirstArtista = indexOfLastArtista - itemsPerPage;
-  const currentArtistas = sortedArtistas.slice(indexOfFirstArtista, indexOfLastArtista);
-  const totalPages = Math.ceil(sortedArtistas.length / itemsPerPage);
+  const indexOfLastArtist = currentPage * itemsPerPage;
+  const indexOfFirstArtist = indexOfLastArtist - itemsPerPage;
+  const currentArtists = sortedArtists.slice(indexOfFirstArtist, indexOfLastArtist);
+  const totalPages = Math.ceil(sortedArtists.length / itemsPerPage);
 
   return (
     <div className="container">
       <div className="d-flex justify-content-between align-items-center my-4">
         <h1>Lista de Artistas</h1>
-        <Button variant="success" onClick={handleAddArtista}>
+        <Button variant="success" onClick={handleShowModal}>
           <FontAwesomeIcon icon={faPlus} /> Agregar Artista
         </Button>
       </div>
 
       <div className="d-flex mb-3 justify-content-between">
-        {/* Filtro por estado (Checklist debajo del buscador) */}
         <Form.Check
           type="radio"
           label="Mostrar todos"
@@ -135,12 +129,11 @@ const ArtistList = () => {
           checked={filterStatus === 'I'}
         />
 
-        {/* Buscador a la derecha */}
         <div style={{ position: 'relative', width: '200px' }}>
           <Form.Control
             type="text"
-            placeholder="Buscar artista"
-            style={{ height: '38px' }} // Ajustar el tamaño del buscador
+            placeholder="Buscar"
+            style={{ height: '38px' }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -151,7 +144,6 @@ const ArtistList = () => {
       </div>
 
       <div className="d-flex mb-3 justify-content-start">
-        {/* Ordenar con icono de filtro */}
         <Dropdown>
           <Dropdown.Toggle variant="outline-secondary" id="dropdown-basic" className="d-flex align-items-center">
             <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
@@ -159,8 +151,8 @@ const ArtistList = () => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu>
-            <Dropdown.Item onClick={() => setSortBy('artistAsc')}>Artista A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('artistDesc')}>Artista Z-A</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>Artista A-Z</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>Artista Z-A</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
       </div>
@@ -171,28 +163,24 @@ const ArtistList = () => {
             <th>ID</th>
             <th>Nombre</th>
             <th>Estado</th>
-            <th>Fecha Modificación</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {currentArtistas.map((artista) => (
-            <tr key={artista.artista_id}>
-              <td>{artista.artista_id}</td>
-              <td>{artista.artista_nombre}</td>
-              <td>{artista.artista_status === 'A' ? 'Activo' : 'Inactivo'}</td>
-              <td>{formatDateTime(artista.artista_fecha_modificacion)}</td> {/* Mostrar fecha y hora de modificación */}
+          {currentArtists.map((artist) => (
+            <tr key={artist.artista_id}>
+              <td>{artist.artista_id}</td>
+              <td>{artist.artista_nombre}</td>
+              <td>{artist.artista_status === 'A' ? 'Activo' : 'Inactivo'}</td>
               <td>
-                <Button variant="info" onClick={() => handleEdit(artista)}>
+                <Button variant="info" onClick={() => handleEdit(artist)}>
                   <FontAwesomeIcon icon={faEdit} /> Editar
                 </Button>{' '}
                 <Button
-                  variant={artista.artista_status === 'A' ? 'danger' : 'success'}
-                  onClick={() => toggleArtista(artista)}
+                  variant="danger"
+                  onClick={() => handleDelete(artist.artista_id)}
                 >
-                  <FontAwesomeIcon icon={artista.artista_status === 'A' ? faToggleOff : faToggleOn} />
-                  {' '}
-                  {artista.artista_status === 'A' ? 'Desactivar' : 'Activar'}
+                  Eliminar
                 </Button>
               </td>
             </tr>
@@ -200,7 +188,6 @@ const ArtistList = () => {
         </tbody>
       </Table>
 
-      {/* Paginación */}
       <nav style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
         <ul className="pagination">
           <li className="page-item">
@@ -209,19 +196,15 @@ const ArtistList = () => {
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
             >
-              &laquo; {/* Flecha izquierda */}
+              &laquo;
             </Button>
           </li>
-          {/* Mostrar solo 3 números de página */}
           {Array.from({ length: Math.min(3, totalPages) }).map((_, index) => {
             const pageNumber = index + Math.max(currentPage - 1, 1);
             if (pageNumber <= totalPages) {
               return (
                 <li key={pageNumber} className="page-item">
-                  <Button
-                    onClick={() => setCurrentPage(pageNumber)}
-                    className="page-link"
-                  >
+                  <Button onClick={() => setCurrentPage(pageNumber)} className="page-link">
                     {pageNumber}
                   </Button>
                 </li>
@@ -235,23 +218,18 @@ const ArtistList = () => {
               onClick={() => setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
             >
-              &raquo; {/* Flecha derecha */}
+              &raquo;
             </Button>
           </li>
         </ul>
       </nav>
 
-      {/* Modal para agregar o editar artista */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
-          <Modal.Title>{editingArtista ? 'Editar Artista' : 'Agregar Artista'}</Modal.Title>
+          <Modal.Title>{editingArtist ? 'Editar Artista' : 'Agregar Artista'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <ArtistForm
-            artista={editingArtista}
-            onClose={handleCloseModal}
-            refreshArtistas={fetchArtistas} // Refrescar la lista después de agregar/editar
-          />
+          <ArtistForm artist={editingArtist} onClose={handleCloseModal} refreshArtists={fetchArtists} />
         </Modal.Body>
       </Modal>
     </div>

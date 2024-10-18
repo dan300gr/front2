@@ -2,30 +2,30 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Table, Modal, Form, Dropdown } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faToggleOn, faToggleOff, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
-import Swal from 'sweetalert2'; // Importar SweetAlert2
-import StockForm from './StockForm'; // Importamos el formulario para usarlo en el modal
+import { faEdit, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
+import StockForm from './StockForm'; // Asegúrate de crear este formulario también
 
 const StockList = () => {
   const [stocks, setStocks] = useState([]);
-  const [showModal, setShowModal] = useState(false); // Estado para el modal
-  const [editingStock, setEditingStock] = useState(null); // Estado para editar stock
-  const [searchTerm, setSearchTerm] = useState(''); // Estado para el buscador
-  const [sortBy, setSortBy] = useState(''); // Estado para el ordenamiento
-  const [filterStatus, setFilterStatus] = useState('todos'); // Estado para el filtro de estado
-  const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
-  const [itemsPerPage] = useState(10); // Número de elementos por página
-  const [productos, setProductos] = useState([]); // Estado para productos
-
+  const [productos, setProductos] = useState([]); // Nuevo estado para almacenar productos
+  const [showModal, setShowModal] = useState(false);
+  const [editingStock, setEditingStock] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('todos');
+  const [sortBy, setSortBy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  
   useEffect(() => {
     fetchStocks();
-    fetchProductos();
+    fetchProductos(); // Llama a la función para obtener productos
   }, []);
 
   const fetchStocks = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/stocks/');
-      setStocks(response.data); // Asegurarnos de que obtenemos tanto los activos como los inactivos
+      const response = await axios.get('http://20.246.139.92/api/stocks/');
+      setStocks(response.data);
     } catch (error) {
       console.error('Error al obtener los stocks:', error);
     }
@@ -33,100 +33,95 @@ const StockList = () => {
 
   const fetchProductos = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/productos/');
-      setProductos(response.data); // Cargar la lista de productos
+      const response = await axios.get('http://20.246.139.92/api/productos/'); // Asegúrate de que este endpoint sea correcto
+      setProductos(response.data);
     } catch (error) {
       console.error('Error al obtener los productos:', error);
     }
   };
 
-  const formatDateTime = (datetime) => {
-    const date = new Date(datetime);
-    return date.toLocaleString();  // Formatear a cadena legible
+  const handleEdit = (stock) => {
+    setEditingStock(stock);
+    setShowModal(true);
   };
 
-  const toggleStock = async (stock) => {
+  const handleShowModal = () => {
+    setEditingStock(null);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => setShowModal(false);
+
+  const handleDelete = async (stock_id) => {
     try {
-      if (stock.stock_status === 'A') {
-        await axios.put(`http://127.0.0.1:8000/stocks/${stock.stock_id}/desactivar`);
+      // Comprobar si el stock está asociado a algún inventario
+      const inventariosResponse = await axios.get('http://20.246.139.92/api/inventarios/');
+      const inventarios = inventariosResponse.data;
+      const isStockInInventarios = inventarios.some(inventario => inventario.stock_id === stock_id);
+
+      if (isStockInInventarios) {
         Swal.fire({
-          icon: 'success',
-          title: 'Stock desactivado',
-          text: 'El stock ha sido desactivado exitosamente.',
+          icon: 'warning',
+          title: 'Advertencia',
+          text: 'No se puede eliminar el stock porque está asociado a inventarios.',
         });
-      } else {
-        await axios.put(`http://127.0.0.1:8000/stocks/${stock.stock_id}/activar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Stock activado',
-          text: 'El stock ha sido activado exitosamente.',
-        });
+        return;
       }
-      fetchStocks(); // Recargar la lista de stocks
+
+      await axios.delete(`http://20.246.139.92/api/stocks/${stock_id}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Stock eliminado',
+        text: 'El stock ha sido eliminado exitosamente.',
+      });
+      fetchStocks();
     } catch (error) {
-      console.error('Error al cambiar el estado del stock:', error);
+      console.error('Error al eliminar el stock:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo cambiar el estado del stock.',
+        text: 'No se pudo eliminar el stock.',
       });
     }
   };
 
-  const handleEdit = (stock) => {
-    setEditingStock(stock); // Establecer el stock en edición
-    setShowModal(true); // Mostrar el modal para editar
-  };
+  const filteredStocks = stocks.filter((stock) => {
+    const producto = productos.find(p => p.producto_id === stock.producto_id); // Encuentra el producto correspondiente
+    const nombreProducto = producto ? producto.producto_nombre : ''; // Obtiene el nombre del producto o una cadena vacía
+    const nameMatch = nombreProducto.toLowerCase().includes(searchTerm.toLowerCase());
+    const statusMatch = filterStatus === 'todos' || stock.stock_status === filterStatus;
+    return nameMatch && statusMatch;
+  });
 
-  const handleAddStock = () => {
-    setEditingStock(null); // Limpiar el formulario para agregar
-    setShowModal(true); // Mostrar el modal para agregar
-  };
-
-  const handleCloseModal = () => setShowModal(false); // Cerrar el modal
-
-  // Filtrar stocks según el término de búsqueda y el estado
-  const filteredStocks = stocks.filter(stock =>
-    stock.stock_id.toString().includes(searchTerm) &&
-    (filterStatus === 'todos' || stock.stock_status === filterStatus)
-  );
-
-  // Ordenar stocks
   const sortedStocks = [...filteredStocks].sort((a, b) => {
+    const productoA = productos.find(p => p.producto_id === a.producto_id);
+    const productoB = productos.find(p => p.producto_id === b.producto_id);
+    const nombreA = productoA ? productoA.producto_nombre : '';
+    const nombreB = productoB ? productoB.producto_nombre : '';
+    
     if (sortBy === 'nombreAsc') {
-      return a.stock_id - b.stock_id; // Suponiendo que se desea ordenar por ID de stock
+      return nombreA.localeCompare(nombreB);
     } else if (sortBy === 'nombreDesc') {
-      return b.stock_id - a.stock_id; // Suponiendo que se desea ordenar por ID de stock
-    } else if (sortBy === 'productoAsc') {
-      return productos.find(p => p.producto_id === a.producto_id)?.producto_nombre.localeCompare(
-        productos.find(p => p.producto_id === b.producto_id)?.producto_nombre
-      ) || 0;
-    } else if (sortBy === 'productoDesc') {
-      return productos.find(p => p.producto_id === b.producto_id)?.producto_nombre.localeCompare(
-        productos.find(p => p.producto_id === a.producto_id)?.producto_nombre
-      ) || 0;
+      return nombreB.localeCompare(nombreA);
     }
     return 0;
   });
 
-  // Paginación
   const indexOfLastStock = currentPage * itemsPerPage;
   const indexOfFirstStock = indexOfLastStock - itemsPerPage;
   const currentStocks = sortedStocks.slice(indexOfFirstStock, indexOfLastStock);
-
   const totalPages = Math.ceil(sortedStocks.length / itemsPerPage);
 
   return (
     <div className="container">
       <div className="d-flex justify-content-between align-items-center my-4">
         <h1>Lista de Stocks</h1>
-        <Button variant="success" onClick={handleAddStock}>
+        <Button variant="success" onClick={handleShowModal}>
           <FontAwesomeIcon icon={faPlus} /> Agregar Stock
         </Button>
       </div>
 
       <div className="d-flex mb-3 justify-content-between">
-        {/* Filtro por estado */}
         <Form.Check
           type="radio"
           label="Mostrar todos"
@@ -152,11 +147,10 @@ const StockList = () => {
           checked={filterStatus === 'I'}
         />
 
-        {/* Buscador */}
         <div style={{ position: 'relative', width: '200px' }}>
           <Form.Control
             type="text"
-            placeholder="Buscar stock"
+            placeholder="Buscar"
             style={{ height: '38px' }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -168,7 +162,6 @@ const StockList = () => {
       </div>
 
       <div className="d-flex mb-3 justify-content-start">
-        {/* Ordenar con icono de filtro */}
         <Dropdown>
           <Dropdown.Toggle variant="outline-secondary" id="dropdown-basic" className="d-flex align-items-center">
             <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
@@ -176,10 +169,8 @@ const StockList = () => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu>
-            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>ID Ascendente</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>ID Descendente</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('productoAsc')}>Producto A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('productoDesc')}>Producto Z-A</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>Producto A-Z</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>Producto Z-A</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
       </div>
@@ -191,37 +182,36 @@ const StockList = () => {
             <th>Producto</th>
             <th>Cantidad</th>
             <th>Estado</th>
-            <th>Fecha Modificación</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {currentStocks.map((stock) => (
-            <tr key={stock.stock_id}>
-              <td>{stock.stock_id}</td>
-              <td>{productos.find(p => p.producto_id === stock.producto_id)?.producto_nombre || 'Sin Producto'}</td>
-              <td>{stock.stock_cantidad}</td>
-              <td>{stock.stock_status === 'A' ? 'Activo' : 'Inactivo'}</td>
-              <td>{formatDateTime(stock.stock_fecha_modificacion)}</td>
-              <td>
-                <Button variant="info" onClick={() => handleEdit(stock)}>
-                  <FontAwesomeIcon icon={faEdit} /> Editar
-                </Button>{' '}
-                <Button
-                  variant={stock.stock_status === 'A' ? 'danger' : 'success'}
-                  onClick={() => toggleStock(stock)}
-                >
-                  <FontAwesomeIcon icon={stock.stock_status === 'A' ? faToggleOff : faToggleOn} />
-                  {' '}
-                  {stock.stock_status === 'A' ? 'Desactivar' : 'Activar'}
-                </Button>
-              </td>
-            </tr>
-          ))}
+          {currentStocks.map((stock) => {
+            const producto = productos.find(p => p.producto_id === stock.producto_id);
+            const nombreProducto = producto ? producto.producto_nombre : 'Desconocido'; // Manejo de nombres desconocidos
+            return (
+              <tr key={stock.stock_id}>
+                <td>{stock.stock_id}</td>
+                <td>{nombreProducto}</td>
+                <td>{stock.stock_cantidad}</td>
+                <td>{stock.stock_status === 'A' ? 'Activo' : 'Inactivo'}</td>
+                <td>
+                  <Button variant="info" onClick={() => handleEdit(stock)}>
+                    <FontAwesomeIcon icon={faEdit} /> Editar
+                  </Button>{' '}
+                  <Button
+                    variant="danger"
+                    onClick={() => handleDelete(stock.stock_id)}
+                  >
+                    Eliminar
+                  </Button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </Table>
 
-      {/* Paginación */}
       <nav style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
         <ul className="pagination">
           <li className="page-item">
@@ -230,7 +220,7 @@ const StockList = () => {
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
             >
-              &laquo; {/* Flecha izquierda */}
+              &laquo;
             </Button>
           </li>
           {Array.from({ length: Math.min(3, totalPages) }).map((_, index) => {
@@ -252,24 +242,18 @@ const StockList = () => {
               onClick={() => setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
             >
-              &raquo; {/* Flecha derecha */}
+              &raquo;
             </Button>
           </li>
         </ul>
       </nav>
 
-      {/* Modal para agregar o editar stock */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>{editingStock ? 'Editar Stock' : 'Agregar Stock'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <StockForm
-            stock={editingStock}
-            onClose={handleCloseModal}
-            refreshStocks={fetchStocks} // Refrescar la lista después de agregar/editar
-            productos={productos} // Pasar productos al formulario
-          />
+          <StockForm stock={editingStock} onClose={handleCloseModal} refreshStocks={fetchStocks} />
         </Modal.Body>
       </Modal>
     </div>

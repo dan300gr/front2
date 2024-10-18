@@ -4,7 +4,6 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 import axios from 'axios';
 import { Chart, registerables } from 'chart.js';
 
-// Registrar todos los elementos de Chart.js
 Chart.register(...registerables);
 
 const Dashboard = () => {
@@ -20,25 +19,29 @@ const Dashboard = () => {
   });
 
   const [stockData, setStockData] = useState([]);
-  const [productData, setProductData] = useState([]);
+  const [activeSuppliersCount, setActiveSuppliersCount] = useState(0);
+  const [inactiveSuppliersCount, setInactiveSuppliersCount] = useState(0);
 
   // Fetch data for summary and charts
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productResponse = await axios.get('http://127.0.0.1:8000/productos/');
-        const inventoryResponse = await axios.get('http://127.0.0.1:8000/inventarios/');
-        const supplierResponse = await axios.get('http://127.0.0.1:8000/proveedores/');
-        const albumResponse = await axios.get('http://127.0.0.1:8000/albums/');
-        const artistResponse = await axios.get('http://127.0.0.1:8000/artistas/');
-        const stockResponse = await axios.get('http://127.0.0.1:8000/stocks/');
-        const locationResponse = await axios.get('http://127.0.0.1:8000/ubicaciones/');
-        const buildingResponse = await axios.get('http://127.0.0.1:8000/edificios/');
+        const productResponse = await axios.get('http://20.246.139.92/api/tipos-producto/');
+        const inventoryResponse = await axios.get('http://20.246.139.92/api/inventarios/');
+        const supplierResponse = await axios.get('http://20.246.139.92/api/proveedores/');
+        const albumResponse = await axios.get('http://20.246.139.92/api/albumes/');
+        const artistResponse = await axios.get('http://20.246.139.92/api/artistas/');
+        const stockResponse = await axios.get('http://20.246.139.92/api/stocks/');
+        const locationResponse = await axios.get('http://20.246.139.92/api/ubicaciones/');
+        const buildingResponse = await axios.get('http://20.246.139.92/api/edificios/');
+
+        const activos = supplierResponse.data.filter(s => s.proveedor_status === 'A');
+        const inactivos = supplierResponse.data.filter(s => s.proveedor_status !== 'A');
 
         setSummaryData({
-          products: productResponse.data.filter(p => p.producto_status === 'A').length,
+          products: productResponse.data.length,
           inventories: inventoryResponse.data.length,
-          suppliers: supplierResponse.data.filter(s => s.proveedor_status === 'A').length,
+          suppliers: activos.length + inactivos.length,
           albums: albumResponse.data.filter(a => a.album_status === 'A').length,
           artists: artistResponse.data.filter(a => a.artista_status === 'A').length,
           stock: stockResponse.data.length,
@@ -49,8 +52,9 @@ const Dashboard = () => {
         // Set stock data for chart
         setStockData(stockResponse.data);
         
-        // Set product data for chart
-        setProductData(productResponse.data);
+        // Set active and inactive suppliers counts
+        setActiveSuppliersCount(activos.length);
+        setInactiveSuppliersCount(inactivos.length);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -77,19 +81,24 @@ const Dashboard = () => {
     ],
   };
 
-  // Chart Data for Products
-  const productChartData = {
-    labels: productData.map(item => item.producto_nombre),
+  // Chart Data for Suppliers
+  const supplierChartData = {
+    labels: ['Proveedores Activos', 'Proveedores Inactivos'], // Nombres de las categorías
     datasets: [
       {
-        label: 'Productos Activos',
-        data: productData.map(item => item.producto_status === 'A' ? 1 : 0),
-        backgroundColor: productData.map(() => 
-          `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`
-        ),
-        borderColor: productData.map(() => 
-          `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`
-        ),
+        label: 'Estado de Proveedores',
+        data: [
+          activeSuppliersCount, // Cantidad de proveedores activos
+          inactiveSuppliersCount // Cantidad de proveedores inactivos
+        ],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.6)', // Color para proveedores activos
+          'rgba(255, 99, 132, 0.6)' // Color para proveedores inactivos
+        ],
+        borderColor: [
+          'rgba(75, 192, 192, 1)', 
+          'rgba(255, 99, 132, 1)'
+        ],
         borderWidth: 1,
       },
     ],
@@ -103,7 +112,7 @@ const Dashboard = () => {
         <Col md={3}>
           <Card>
             <Card.Body>
-              <Card.Title>Productos Activos</Card.Title>
+              <Card.Title>Productos</Card.Title>
               <Card.Text>{summaryData.products}</Card.Text>
             </Card.Body>
           </Card>
@@ -181,8 +190,8 @@ const Dashboard = () => {
         <Col md={6}>
           <Card>
             <Card.Body>
-              <Card.Title>Productos Activos</Card.Title>
-              <Doughnut data={productChartData} />
+              <Card.Title>Estado de Proveedores</Card.Title>
+              <Doughnut data={supplierChartData} />
             </Card.Body>
           </Card>
         </Col>

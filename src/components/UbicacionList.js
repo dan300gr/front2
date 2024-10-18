@@ -2,29 +2,29 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Table, Modal, Form, Dropdown } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faToggleOn, faToggleOff, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faPlus, faSearch, faFilter } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
-import UbicacionForm from './UbicacionForm'; // Importar el formulario para usarlo en el modal
+import UbicacionForm from './UbicacionForm';
 
 const UbicacionList = () => {
   const [ubicaciones, setUbicaciones] = useState([]);
-  const [edificios, setEdificios] = useState([]); // Estado para edificios
+  const [edificios, setEdificios] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingUbicacion, setEditingUbicacion] = useState(null); 
-  const [searchTerm, setSearchTerm] = useState(''); 
-  const [sortBy, setSortBy] = useState(''); 
+  const [editingUbicacion, setEditingUbicacion] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('todos');
-  const [currentPage, setCurrentPage] = useState(1); 
+  const [sortBy, setSortBy] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchUbicaciones();
-    fetchEdificios();
+    fetchEdificios(); // Obtener edificios al cargar el componente
   }, []);
 
   const fetchUbicaciones = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/ubicaciones/');
+      const response = await axios.get('http://20.246.139.92/api/ubicaciones/');
       setUbicaciones(response.data);
     } catch (error) {
       console.error('Error al obtener las ubicaciones:', error);
@@ -33,43 +33,10 @@ const UbicacionList = () => {
 
   const fetchEdificios = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/edificios/');
-      setEdificios(response.data); // Obtener edificios
+      const response = await axios.get('http://20.246.139.92/api/edificios/'); // Cambia la URL según corresponda
+      setEdificios(response.data.filter(edificio => edificio.edificio_status === 'A')); // Filtrar edificios activos
     } catch (error) {
-      console.error('Error al obtener los edificios:', error);
-    }
-  };
-
-  const formatDateTime = (datetime) => {
-    const date = new Date(datetime);
-    return date.toLocaleString();  
-  };
-
-  const toggleUbicacion = async (ubicacion) => {
-    try {
-      if (ubicacion.ubicacion_status === 'A') {
-        await axios.put(`http://127.0.0.1:8000/ubicaciones/${ubicacion.ubicacion_id}/desactivar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Ubicación desactivada',
-          text: 'La ubicación ha sido desactivada exitosamente.',
-        });
-      } else {
-        await axios.put(`http://127.0.0.1:8000/ubicaciones/${ubicacion.ubicacion_id}/activar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Ubicación activada',
-          text: 'La ubicación ha sido activada exitosamente.',
-        });
-      }
-      fetchUbicaciones(); 
-    } catch (error) {
-      console.error('Error al cambiar el estado de la ubicación:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo cambiar el estado de la ubicación.',
-      });
+      console.error('Error al obtener edificios:', error);
     }
   };
 
@@ -78,33 +45,57 @@ const UbicacionList = () => {
     setShowModal(true);
   };
 
-  const handleAddUbicacion = () => {
-    setEditingUbicacion(null); 
+  const handleShowModal = () => {
+    setEditingUbicacion(null);
     setShowModal(true);
   };
 
   const handleCloseModal = () => setShowModal(false);
 
-  // Función para obtener el nombre del edificio
-  const getEdificioNombre = (edificio_id) => {
-    const edificio = edificios.find(ed => ed.edificio_id === edificio_id);
-    return edificio ? edificio.edificio_nombre : 'Sin edificio'; 
+  const handleDelete = async (ubicacion_id) => {
+    try {
+      // Comprobar si la ubicación está asociada a algún inventario
+      const inventarioResponse = await axios.get('http://20.246.139.92/api/inventarios/');
+      const inventarios = inventarioResponse.data;
+      const isUbicacionInInventario = inventarios.some(inventario => inventario.ubicacion_id === ubicacion_id);
+      
+      if (isUbicacionInInventario) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Advertencia',
+          text: 'No se puede eliminar la ubicación porque está asociada a un inventario.',
+        });
+        return;
+      }
+
+      await axios.delete(`http://20.246.139.92/api/ubicaciones/${ubicacion_id}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Ubicación eliminada',
+        text: 'La ubicación ha sido eliminada exitosamente.',
+      });
+      fetchUbicaciones();
+    } catch (error) {
+      console.error('Error al eliminar la ubicación:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo eliminar la ubicación.',
+      });
+    }
   };
 
-  const filteredUbicaciones = ubicaciones.filter(ubicacion =>
-    ubicacion.ubicacion_nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (filterStatus === 'todos' || ubicacion.ubicacion_status === filterStatus)
-  );
+  const filteredUbicaciones = ubicaciones.filter((ubicacion) => {
+    const nameMatch = ubicacion.ubicacion_nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    const statusMatch = filterStatus === 'todos' || ubicacion.ubicacion_status === filterStatus;
+    return nameMatch && statusMatch;
+  });
 
   const sortedUbicaciones = [...filteredUbicaciones].sort((a, b) => {
     if (sortBy === 'nombreAsc') {
       return a.ubicacion_nombre.localeCompare(b.ubicacion_nombre);
     } else if (sortBy === 'nombreDesc') {
       return b.ubicacion_nombre.localeCompare(a.ubicacion_nombre);
-    } else if (sortBy === 'edificioAsc') {
-      return getEdificioNombre(a.edificio_id).localeCompare(getEdificioNombre(b.edificio_id));
-    } else if (sortBy === 'edificioDesc') {
-      return getEdificioNombre(b.edificio_id).localeCompare(getEdificioNombre(a.edificio_id));
     }
     return 0;
   });
@@ -112,14 +103,13 @@ const UbicacionList = () => {
   const indexOfLastUbicacion = currentPage * itemsPerPage;
   const indexOfFirstUbicacion = indexOfLastUbicacion - itemsPerPage;
   const currentUbicaciones = sortedUbicaciones.slice(indexOfFirstUbicacion, indexOfLastUbicacion);
-
   const totalPages = Math.ceil(sortedUbicaciones.length / itemsPerPage);
 
   return (
     <div className="container">
       <div className="d-flex justify-content-between align-items-center my-4">
         <h1>Lista de Ubicaciones</h1>
-        <Button variant="success" onClick={handleAddUbicacion}>
+        <Button variant="success" onClick={handleShowModal}>
           <FontAwesomeIcon icon={faPlus} /> Agregar Ubicación
         </Button>
       </div>
@@ -153,7 +143,7 @@ const UbicacionList = () => {
         <div style={{ position: 'relative', width: '200px' }}>
           <Form.Control
             type="text"
-            placeholder="Buscar ubicación"
+            placeholder="Buscar"
             style={{ height: '38px' }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -172,10 +162,8 @@ const UbicacionList = () => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu>
-            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>Nombre A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>Nombre Z-A</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('edificioAsc')}>Edificio A-Z</Dropdown.Item>
-            <Dropdown.Item onClick={() => setSortBy('edificioDesc')}>Edificio Z-A</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreAsc')}>Ubicación A-Z</Dropdown.Item>
+            <Dropdown.Item onClick={() => setSortBy('nombreDesc')}>Ubicación Z-A</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
       </div>
@@ -185,43 +173,45 @@ const UbicacionList = () => {
           <tr>
             <th>ID</th>
             <th>Nombre</th>
-            <th>Edificio</th>
+            <th>Edificio</th> {/* Nueva columna para el nombre del edificio */}
             <th>Estado</th>
-            <th>Fecha Modificación</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {currentUbicaciones.map((ubicacion) => (
-            <tr key={ubicacion.ubicacion_id}>
-              <td>{ubicacion.ubicacion_id}</td>
-              <td>{ubicacion.ubicacion_nombre}</td>
-              <td>{getEdificioNombre(ubicacion.edificio_id)}</td>
-              <td>{ubicacion.ubicacion_status === 'A' ? 'Activo' : 'Inactivo'}</td>
-              <td>{formatDateTime(ubicacion.ubicacion_fecha_modificacion)}</td>
-              <td>
-                <Button variant="info" onClick={() => handleEdit(ubicacion)}>
-                  <FontAwesomeIcon icon={faEdit} /> Editar
-                </Button>{' '}
-                <Button
-                  variant={ubicacion.ubicacion_status === 'A' ? 'danger' : 'success'}
-                  onClick={() => toggleUbicacion(ubicacion)}
-                >
-                  <FontAwesomeIcon icon={ubicacion.ubicacion_status === 'A' ? faToggleOff : faToggleOn} />
-                  {' '}
-                  {ubicacion.ubicacion_status === 'A' ? 'Desactivar' : 'Activar'}
-                </Button>
-              </td>
-            </tr>
-          ))}
+          {currentUbicaciones.map((ubicacion) => {
+            const edificio = edificios.find(edificio => edificio.edificio_id === ubicacion.edificio_id);
+            return (
+              <tr key={ubicacion.ubicacion_id}>
+                <td>{ubicacion.ubicacion_id}</td>
+                <td>{ubicacion.ubicacion_nombre}</td>
+                <td>{edificio ? edificio.edificio_nombre : 'N/A'}</td> {/* Mostrar nombre del edificio */}
+                <td>{ubicacion.ubicacion_status === 'A' ? 'Activo' : 'Inactivo'}</td>
+                <td>
+                  <Button variant="info" onClick={() => handleEdit(ubicacion)}>
+                    <FontAwesomeIcon icon={faEdit} /> Editar
+                  </Button>{' '}
+                  <Button
+                    variant="danger"
+                    onClick={() => handleDelete(ubicacion.ubicacion_id)}
+                  >
+                    Eliminar
+                  </Button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </Table>
 
-      {/* Paginación */}
       <nav style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
         <ul className="pagination">
           <li className="page-item">
-            <Button className="page-link" onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+            <Button
+              className="page-link"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
               &laquo;
             </Button>
           </li>
@@ -239,24 +229,23 @@ const UbicacionList = () => {
             return null;
           })}
           <li className="page-item">
-            <Button className="page-link" onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages}>
+            <Button
+              className="page-link"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
               &raquo;
             </Button>
           </li>
         </ul>
       </nav>
 
-      {/* Modal para agregar o editar ubicación */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>{editingUbicacion ? 'Editar Ubicación' : 'Agregar Ubicación'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <UbicacionForm
-            ubicacion={editingUbicacion}
-            onClose={handleCloseModal}
-            refreshUbicaciones={fetchUbicaciones}
-          />
+          <UbicacionForm ubicacion={editingUbicacion} onClose={handleCloseModal} refreshUbicaciones={fetchUbicaciones} />
         </Modal.Body>
       </Modal>
     </div>

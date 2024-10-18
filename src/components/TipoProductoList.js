@@ -18,7 +18,7 @@ const TipoProductoList = () => {
 
   const formatDateTime = (datetime) => {
     const date = new Date(datetime);
-    return date.toLocaleString();  // Formatear a cadena legible
+    return date.toLocaleString();
   };
 
   useEffect(() => {
@@ -27,38 +27,10 @@ const TipoProductoList = () => {
 
   const fetchTiposProductos = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/tipoproductos/');
+      const response = await axios.get('http://20.246.139.92/api/tipos-producto/');
       setTiposProductos(response.data);
     } catch (error) {
       console.error('Error al obtener los tipos de productos:', error);
-    }
-  };
-
-  const toggleTipoProducto = async (tipoProducto) => {
-    try {
-      if (tipoProducto.tipo_status === 'A') {
-        await axios.put(`http://127.0.0.1:8000/tipoproductos/${tipoProducto.tipo_id}/desactivar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Tipo de Producto desactivado',
-          text: 'El tipo de producto ha sido desactivado exitosamente.',
-        });
-      } else {
-        await axios.put(`http://127.0.0.1:8000/tipoproductos/${tipoProducto.tipo_id}/activar`);
-        Swal.fire({
-          icon: 'success',
-          title: 'Tipo de Producto activado',
-          text: 'El tipo de producto ha sido activado exitosamente.',
-        });
-      }
-      fetchTiposProductos();
-    } catch (error) {
-      console.error('Error al cambiar el estado del tipo de producto:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo desactivar el tipo de producto debido a que está siendo usado en otra tabla',
-      });
     }
   };
 
@@ -74,13 +46,44 @@ const TipoProductoList = () => {
 
   const handleCloseModal = () => setShowModal(false);
 
-  // Filtrar tipos de productos por nombre y estado
-  const filteredTiposProductos = tiposProductos.filter(tipo =>
+  const handleDelete = async (tipo_id) => {
+    try {
+      // Verificar si el tipo de producto está asociado a algún producto
+      const productsResponse = await axios.get('http://20.246.139.92/api/productos/');
+      const products = productsResponse.data;
+      const isTipoInProducts = products.some(product => product.tipo_id === tipo_id);
+
+      if (isTipoInProducts) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Advertencia',
+          text: 'No se puede eliminar el tipo de producto porque está asociado a productos.',
+        });
+        return;
+      }
+
+      await axios.delete(`http://20.246.139.92/api/tipos-producto/${tipo_id}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Tipo de Producto eliminado',
+        text: 'El tipo de producto ha sido eliminado exitosamente.',
+      });
+      fetchTiposProductos();
+    } catch (error) {
+      console.error('Error al eliminar el tipo de producto:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo eliminar el tipo de producto.',
+      });
+    }
+  };
+
+  const filteredTiposProductos = tiposProductos.filter((tipo) =>
     tipo.tipo_nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (filterStatus === 'todos' || tipo.tipo_status === filterStatus)
   );
 
-  // Ordenar tipos de productos
   const sortedTiposProductos = [...filteredTiposProductos].sort((a, b) => {
     if (sortBy === 'tipoAsc') {
       return a.tipo_nombre.localeCompare(b.tipo_nombre);
@@ -90,7 +93,6 @@ const TipoProductoList = () => {
     return 0;
   });
 
-  // Paginación
   const indexOfLastTipoProducto = currentPage * itemsPerPage;
   const indexOfFirstTipoProducto = indexOfLastTipoProducto - itemsPerPage;
   const currentTiposProductos = sortedTiposProductos.slice(indexOfFirstTipoProducto, indexOfLastTipoProducto);
@@ -165,7 +167,6 @@ const TipoProductoList = () => {
             <th>ID</th>
             <th>Nombre</th>
             <th>Estado</th>
-            <th>Fecha Modificación</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -175,18 +176,15 @@ const TipoProductoList = () => {
               <td>{tipoProducto.tipo_id}</td>
               <td>{tipoProducto.tipo_nombre}</td>
               <td>{tipoProducto.tipo_status === 'A' ? 'Activo' : 'Inactivo'}</td>
-              <td>{formatDateTime(tipoProducto.tipo_fecha_modificacion)}</td> {/* Mostrar fecha y hora de modificación */}
               <td>
                 <Button variant="info" onClick={() => handleEdit(tipoProducto)}>
                   <FontAwesomeIcon icon={faEdit} /> Editar
                 </Button>{' '}
                 <Button
-                  variant={tipoProducto.tipo_status === 'A' ? 'danger' : 'success'}
-                  onClick={() => toggleTipoProducto(tipoProducto)}
+                  variant="danger"
+                  onClick={() => handleDelete(tipoProducto.tipo_id)}
                 >
-                  <FontAwesomeIcon icon={tipoProducto.tipo_status === 'A' ? faToggleOff : faToggleOn} />
-                  {' '}
-                  {tipoProducto.tipo_status === 'A' ? 'Desactivar' : 'Activar'}
+                  Eliminar
                 </Button>
               </td>
             </tr>
@@ -235,11 +233,7 @@ const TipoProductoList = () => {
           <Modal.Title>{editingTipoProducto ? 'Editar Tipo de Producto' : 'Agregar Tipo de Producto'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <TipoProductoForm
-            tipoProducto={editingTipoProducto}
-            onClose={handleCloseModal}
-            refreshTiposProductos={fetchTiposProductos}
-          />
+          <TipoProductoForm tipoProducto={editingTipoProducto} onClose={handleCloseModal} refreshTiposProductos={fetchTiposProductos} />
         </Modal.Body>
       </Modal>
     </div>

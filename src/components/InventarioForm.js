@@ -2,29 +2,73 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Form, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faArrowLeft, faFingerprint } from '@fortawesome/free-solid-svg-icons';
-import Swal from 'sweetalert2'; // Importar SweetAlert2
+import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
 
-const InventarioForm = ({ inventario, onClose, refreshInventarios, ubicaciones, productos, stocks }) => {  // Añadir stocks si se usa
+const InventarioForm = ({ inventario, onClose, refreshInventarios }) => {
   const [formData, setFormData] = useState({
     inventario_id: inventario ? inventario.inventario_id : '',
     ubicacion_id: inventario ? inventario.ubicacion_id : '',
     producto_id: inventario ? inventario.producto_id : '',
-    stock_id: inventario ? inventario.stock_id : '',  // Añadir stock si se utiliza
+    stock_id: inventario ? inventario.stock_id : '',
     inventario_cantidad: inventario ? inventario.inventario_cantidad : 0,
+    inventario_status: inventario ? inventario.inventario_status : 'A',
   });
 
+  const [productos, setProductos] = useState([]);
+  const [ubicaciones, setUbicaciones] = useState([]);
+  const [stocks, setStocks] = useState([]);
+
   useEffect(() => {
-    if (inventario) {
-      setFormData({
-        inventario_id: inventario.inventario_id,
-        ubicacion_id: inventario.ubicacion_id,
-        producto_id: inventario.producto_id,
-        stock_id: inventario.stock_id,  // Añadir stock si se usa
-        inventario_cantidad: inventario.inventario_cantidad,
+    fetchProductos();
+    fetchUbicaciones();
+    fetchStocks();
+  }, []);
+
+  const fetchProductos = async () => {
+    try {
+      const response = await axios.get('http://20.246.139.92/api/productos/');
+      const activos = response.data.filter(producto => producto.producto_status === 'A');
+      setProductos(activos);
+    } catch (error) {
+      console.error('Error al obtener los productos:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudieron cargar los productos.',
       });
     }
-  }, [inventario]);
+  };
+
+  const fetchUbicaciones = async () => {
+    try {
+      const response = await axios.get('http://20.246.139.92/api/ubicaciones/');
+      const activos = response.data.filter(ubicacion => ubicacion.ubicacion_status === 'A');
+      setUbicaciones(activos);
+    } catch (error) {
+      console.error('Error al obtener las ubicaciones:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudieron cargar las ubicaciones.',
+      });
+    }
+  };
+
+  const fetchStocks = async () => {
+    try {
+      const response = await axios.get('http://20.246.139.92/api/stocks/');
+      const activos = response.data.filter(stock => stock.stock_status === 'A');
+      setStocks(activos);
+    } catch (error) {
+      console.error('Error al obtener los stocks:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudieron cargar los stocks.',
+      });
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,30 +76,39 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios, ubicaciones, 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
+      // Guardar o actualizar el inventario
       if (inventario) {
-        await axios.put(`http://127.0.0.1:8000/inventarios/${inventario.inventario_id}`, formData);
+        await axios.put(`http://20.246.139.92/api/inventarios/${inventario.inventario_id}`, formData);
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
-          text: "Inventario actualizado exitosamente.",
+          text: 'Inventario actualizado exitosamente.',
         });
       } else {
-        await axios.post('http://127.0.0.1:8000/inventarios/', formData);
+        await axios.post('http://20.246.139.92/api/inventarios/', formData);
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',
-          text: "Inventario guardado exitosamente.",
+          text: 'Inventario guardado exitosamente.',
         });
       }
-      refreshInventarios(); // Refrescar la lista de inventarios
-      onClose(); // Cerrar el modal
+
+      // Verifica si refreshInventarios está definido antes de llamarlo
+      if (typeof refreshInventarios === 'function') {
+        refreshInventarios();
+      } else {
+        console.error('refreshInventarios no es una función');
+      }
+      
+      onClose();
     } catch (error) {
-      console.error("Error al guardar el inventario:", error);
+      console.error('Error al guardar el inventario:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: "Error al guardar el inventario.",
+        text: 'Error al guardar el inventario.',
       });
     }
   };
@@ -63,7 +116,7 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios, ubicaciones, 
   return (
     <Form onSubmit={handleSubmit}>
       <Form.Group className="mb-3">
-        <Form.Label><FontAwesomeIcon icon={faFingerprint}/> ID del Inventario</Form.Label>
+        <Form.Label>ID del Inventario</Form.Label>
         <Form.Control
           type="text"
           name="inventario_id"
@@ -71,11 +124,9 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios, ubicaciones, 
           onChange={handleChange}
           placeholder="Ingrese el ID del inventario"
           required
-          disabled={!!inventario}  // Deshabilitar si está en modo edición
+          disabled={!!inventario} // Deshabilita el ID si se está editando
         />
       </Form.Group>
-
-      {/* Filtro de ubicaciones activas */}
       <Form.Group className="mb-3">
         <Form.Label>Ubicación</Form.Label>
         <Form.Control
@@ -86,17 +137,13 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios, ubicaciones, 
           required
         >
           <option value="">Seleccione una ubicación</option>
-          {ubicaciones
-            .filter(ubicacion => ubicacion.ubicacion_status === 'A')  // Solo ubicaciones activas
-            .map(ubicacion => (
-              <option key={ubicacion.ubicacion_id} value={ubicacion.ubicacion_id}>
-                {ubicacion.ubicacion_nombre}
-              </option>
+          {ubicaciones.map((ubicacion) => (
+            <option key={ubicacion.ubicacion_id} value={ubicacion.ubicacion_id}>
+              {ubicacion.ubicacion_nombre}
+            </option>
           ))}
         </Form.Control>
       </Form.Group>
-
-      {/* Filtro de productos activos */}
       <Form.Group className="mb-3">
         <Form.Label>Producto</Form.Label>
         <Form.Control
@@ -107,17 +154,13 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios, ubicaciones, 
           required
         >
           <option value="">Seleccione un producto</option>
-          {productos
-            .filter(producto => producto.producto_status === 'A')  // Solo productos activos
-            .map(producto => (
-              <option key={producto.producto_id} value={producto.producto_id}>
-                {producto.producto_nombre}
-              </option>
+          {productos.map((producto) => (
+            <option key={producto.producto_id} value={producto.producto_id}>
+              {producto.producto_nombre}
+            </option>
           ))}
         </Form.Control>
       </Form.Group>
-
-      {/* Filtro de stocks activos, si se usa */}
       <Form.Group className="mb-3">
         <Form.Label>Stock</Form.Label>
         <Form.Control
@@ -125,18 +168,16 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios, ubicaciones, 
           name="stock_id"
           value={formData.stock_id}
           onChange={handleChange}
+          required
         >
           <option value="">Seleccione un stock</option>
-          {stocks
-            .filter(stock => stock.stock_status === 'A')  // Solo stocks activos
-            .map(stock => (
-              <option key={stock.stock_id} value={stock.stock_id}>
-                {`ID: ${stock.stock_id} - Cantidad: ${stock.stock_cantidad}`}
-              </option>
+          {stocks.map((stock) => (
+            <option key={stock.stock_id} value={stock.stock_id}>
+              {stock.stock_id}  {/* Aquí puedes mostrar un nombre más descriptivo si lo tienes */}
+            </option>
           ))}
         </Form.Control>
       </Form.Group>
-
       <Form.Group className="mb-3">
         <Form.Label>Cantidad</Form.Label>
         <Form.Control
@@ -144,12 +185,19 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios, ubicaciones, 
           name="inventario_cantidad"
           value={formData.inventario_cantidad}
           onChange={handleChange}
-          placeholder="Ingrese la cantidad"
+          placeholder="Ingrese la cantidad de inventario"
           required
         />
       </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Estado</Form.Label>
+        <Form.Control as="select" name="inventario_status" value={formData.inventario_status} onChange={handleChange}>
+          <option value="A">Activo</option>
+          <option value="I">Inactivo</option>
+        </Form.Control>
+      </Form.Group>
       <Button variant="success" type="submit">
-        <FontAwesomeIcon icon={faSave} /> {inventario ? 'Actualizar Inventario' : 'Guardar Inventario'}
+        <FontAwesomeIcon icon={faSave} /> {inventario ? 'Actualizar' : 'Guardar'}
       </Button>
       <Button variant="secondary" className="ms-2" onClick={onClose}>
         <FontAwesomeIcon icon={faArrowLeft} /> Volver
