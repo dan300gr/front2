@@ -22,7 +22,7 @@ const ArtistList = () => {
 
   const fetchArtists = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/artistas/');
+      const response = await axios.get('https://20.246.139.92/api/artistas/');
       setArtists(response.data);
     } catch (error) {
       console.error('Error al obtener los artistas:', error);
@@ -44,7 +44,7 @@ const ArtistList = () => {
   const handleDelete = async (artista_id) => {
     try {
       // Comprobar si el artista está asociado a algún álbum
-      const albumsResponse = await axios.get('http://20.246.139.92/api/albumes/');
+      const albumsResponse = await axios.get('https://20.246.139.92/api/albumes/');
       const albums = albumsResponse.data;
       const isArtistInAlbums = albums.some(album => album.artista_id === artista_id);
       
@@ -57,7 +57,7 @@ const ArtistList = () => {
         return;
       }
 
-      await axios.delete(`http://20.246.139.92/api/artistas/${artista_id}`);
+      await axios.delete(`https://20.246.139.92/api/artistas/${artista_id}`);
       Swal.fire({
         icon: 'success',
         title: 'Artista eliminado',
