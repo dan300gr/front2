@@ -24,7 +24,7 @@ const StockList = () => {
 
   const fetchStocks = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/stocks/');
+      const response = await axios.get('http://20.246.139.92/api/stocks/');
       setStocks(response.data);
     } catch (error) {
       console.error('Error al obtener los stocks:', error);
@@ -33,7 +33,7 @@ const StockList = () => {
 
   const fetchProductos = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/productos/'); // Asegúrate de que este endpoint sea correcto
+      const response = await axios.get('http://20.246.139.92/api/productos/'); // Asegúrate de que este endpoint sea correcto
       setProductos(response.data);
     } catch (error) {
       console.error('Error al obtener los productos:', error);
@@ -55,7 +55,7 @@ const StockList = () => {
   const handleDelete = async (stock_id) => {
     try {
       // Comprobar si el stock está asociado a algún inventario
-      const inventariosResponse = await axios.get('https://20.246.139.92/api/inventarios/');
+      const inventariosResponse = await axios.get('http://20.246.139.92/api/inventarios/');
       const inventarios = inventariosResponse.data;
       const isStockInInventarios = inventarios.some(inventario => inventario.stock_id === stock_id);
 
@@ -68,7 +68,7 @@ const StockList = () => {
         return;
       }
 
-      await axios.delete(`https://20.246.139.92/api/stocks/${stock_id}`);
+      await axios.delete(`http://20.246.139.92/api/stocks/${stock_id}`);
       Swal.fire({
         icon: 'success',
         title: 'Stock eliminado',

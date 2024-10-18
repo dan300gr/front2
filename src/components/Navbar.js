@@ -34,7 +34,7 @@ const MyNavbar = () => {
           style={{ display: 'flex', alignItems: 'center' }}
         >
           <img
-            src="https://png.pngtree.com/png-clipart/20221027/ourmid/pngtree-music-logo-png-image_6389182.png"
+            src="http://png.pngtree.com/png-clipart/20221027/ourmid/pngtree-music-logo-png-image_6389182.png"
             alt="Logo"
             style={{ width: '30px', height: '30px', marginRight: '10px' }}
           />

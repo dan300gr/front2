@@ -22,7 +22,7 @@ const TipoProductoForm = ({ tipoProducto, onClose, refreshTiposProductos }) => {
     try {
       // Verificar si se intenta desactivar el tipo de producto
       if (formData.tipo_status === 'I') {
-        const productsResponse = await axios.get('https://20.246.139.92/api/productos/');
+        const productsResponse = await axios.get('http://20.246.139.92/api/productos/');
         const products = productsResponse.data;
         const isTipoInProducts = products.some(product => product.tipo_id === formData.tipo_id);
 
@@ -37,14 +37,14 @@ const TipoProductoForm = ({ tipoProducto, onClose, refreshTiposProductos }) => {
       }
 
       if (tipoProducto) {
-        await axios.put(`https://20.246.139.92/api/tipos-producto/${tipoProducto.tipo_id}`, formData);
+        await axios.put(`http://20.246.139.92/api/tipos-producto/${tipoProducto.tipo_id}`, formData);
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
           text: 'Tipo de Producto actualizado exitosamente.',
         });
       } else {
-        await axios.post('https://20.246.139.92/api/tipos-producto/', formData);
+        await axios.post('http://20.246.139.92/api/tipos-producto/', formData);
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',

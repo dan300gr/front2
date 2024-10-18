@@ -24,7 +24,7 @@ const AlbumList = () => {
 
   const fetchAlbums = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/albumes/');
+      const response = await axios.get('http://20.246.139.92/api/albumes/');
       setAlbums(response.data);
     } catch (error) {
       console.error('Error al obtener los álbumes:', error);
@@ -33,7 +33,7 @@ const AlbumList = () => {
 
   const fetchArtistas = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/artistas/');
+      const response = await axios.get('http://20.246.139.92/api/artistas/');
       setArtistas(response.data);
     } catch (error) {
       console.error('Error al obtener los artistas:', error);
@@ -55,7 +55,7 @@ const AlbumList = () => {
   const handleDelete = async (album_id) => {
     try {
       // Verificar si el álbum está asociado a algún producto
-      const productsResponse = await axios.get('https://20.246.139.92/api/productos/');
+      const productsResponse = await axios.get('http://20.246.139.92/api/productos/');
       const products = productsResponse.data;
       const isAlbumInProducts = products.some(product => product.album_id === album_id);
 
@@ -68,7 +68,7 @@ const AlbumList = () => {
         return;
       }
 
-      await axios.delete(`https://20.246.139.92/api/albumes/${album_id}`);
+      await axios.delete(`http://20.246.139.92/api/albumes/${album_id}`);
       Swal.fire('Eliminado!', 'El álbum ha sido eliminado.', 'success');
       fetchAlbums();
     } catch (error) {

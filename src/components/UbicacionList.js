@@ -24,7 +24,7 @@ const UbicacionList = () => {
 
   const fetchUbicaciones = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/ubicaciones/');
+      const response = await axios.get('http://20.246.139.92/api/ubicaciones/');
       setUbicaciones(response.data);
     } catch (error) {
       console.error('Error al obtener las ubicaciones:', error);
@@ -33,7 +33,7 @@ const UbicacionList = () => {
 
   const fetchEdificios = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/edificios/'); // Cambia la URL según corresponda
+      const response = await axios.get('http://20.246.139.92/api/edificios/'); // Cambia la URL según corresponda
       setEdificios(response.data.filter(edificio => edificio.edificio_status === 'A')); // Filtrar edificios activos
     } catch (error) {
       console.error('Error al obtener edificios:', error);
@@ -55,7 +55,7 @@ const UbicacionList = () => {
   const handleDelete = async (ubicacion_id) => {
     try {
       // Comprobar si la ubicación está asociada a algún inventario
-      const inventarioResponse = await axios.get('https://20.246.139.92/api/inventarios/');
+      const inventarioResponse = await axios.get('http://20.246.139.92/api/inventarios/');
       const inventarios = inventarioResponse.data;
       const isUbicacionInInventario = inventarios.some(inventario => inventario.ubicacion_id === ubicacion_id);
       
@@ -68,7 +68,7 @@ const UbicacionList = () => {
         return;
       }
 
-      await axios.delete(`https://20.246.139.92/api/ubicaciones/${ubicacion_id}`);
+      await axios.delete(`http://20.246.139.92/api/ubicaciones/${ubicacion_id}`);
       Swal.fire({
         icon: 'success',
         title: 'Ubicación eliminada',

@@ -27,7 +27,7 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios }) => {
 
   const fetchProductos = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/productos/');
+      const response = await axios.get('http://20.246.139.92/api/productos/');
       const activos = response.data.filter(producto => producto.producto_status === 'A');
       setProductos(activos);
     } catch (error) {
@@ -42,7 +42,7 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios }) => {
 
   const fetchUbicaciones = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/ubicaciones/');
+      const response = await axios.get('http://20.246.139.92/api/ubicaciones/');
       const activos = response.data.filter(ubicacion => ubicacion.ubicacion_status === 'A');
       setUbicaciones(activos);
     } catch (error) {
@@ -57,7 +57,7 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios }) => {
 
   const fetchStocks = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/stocks/');
+      const response = await axios.get('http://20.246.139.92/api/stocks/');
       const activos = response.data.filter(stock => stock.stock_status === 'A');
       setStocks(activos);
     } catch (error) {
@@ -80,14 +80,14 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios }) => {
     try {
       // Guardar o actualizar el inventario
       if (inventario) {
-        await axios.put(`https://20.246.139.92/api/inventarios/${inventario.inventario_id}`, formData);
+        await axios.put(`http://20.246.139.92/api/inventarios/${inventario.inventario_id}`, formData);
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
           text: 'Inventario actualizado exitosamente.',
         });
       } else {
-        await axios.post('https://20.246.139.92/api/inventarios/', formData);
+        await axios.post('http://20.246.139.92/api/inventarios/', formData);
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',

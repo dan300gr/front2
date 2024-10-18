@@ -22,7 +22,7 @@ const ProveedorList = () => {
 
   const fetchProveedores = async () => {
     try {
-      const response = await axios.get('https://20.246.139.92/api/proveedores/');
+      const response = await axios.get('http://20.246.139.92/api/proveedores/');
       setProveedores(response.data);
     } catch (error) {
       console.error('Error al obtener los proveedores:', error);
@@ -43,7 +43,7 @@ const ProveedorList = () => {
 
   const handleDelete = async (proveedor_id) => {
     try {
-      await axios.delete(`https://20.246.139.92/api/proveedores/${proveedor_id}`);
+      await axios.delete(`http://20.246.139.92/api/proveedores/${proveedor_id}`);
       Swal.fire({
         icon: 'success',
         title: 'Proveedor eliminado',

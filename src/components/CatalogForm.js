@@ -22,7 +22,7 @@ const CatalogForm = ({ catalogo, onClose, refreshCatalogos }) => {
     try {
       // Si estamos editando un catálogo y se intenta desactivar, comprobamos si está asociado a productos
       if (catalogo && formData.catalogo_status === 'I') {
-        const productsResponse = await axios.get('https://20.246.139.92/api/productos/');
+        const productsResponse = await axios.get('http://20.246.139.92/api/productos/');
         const products = productsResponse.data;
         const isCatalogInProducts = products.some(product => product.catalogo_id === catalogo.catalogo_id);
 
@@ -38,14 +38,14 @@ const CatalogForm = ({ catalogo, onClose, refreshCatalogos }) => {
 
       // Guardar o actualizar el catálogo
       if (catalogo) {
-        await axios.put(`https://20.246.139.92/api/catalogos/${catalogo.catalogo_id}`, formData);
+        await axios.put(`http://20.246.139.92/api/catalogos/${catalogo.catalogo_id}`, formData);
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
           text: 'Catálogo actualizado exitosamente.',
         });
       } else {
-        await axios.post('https://20.246.139.92/api/catalogos/', formData);
+        await axios.post('http://20.246.139.92/api/catalogos/', formData);
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',
