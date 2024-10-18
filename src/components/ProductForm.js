@@ -27,7 +27,7 @@ const ProductForm = ({ product, onClose, refreshProducts, types, catalogs, album
     try {
       // Si estamos editando un producto y se intenta desactivar, comprobamos si está asociado a algún stock
       if (product && formData.producto_status === 'I') {
-        const stockResponse = await axios.get('http://20.246.139.92/api/stocks/');
+        const stockResponse = await axios.get('https://20.246.139.92/api/stocks/');
         const stocks = stockResponse.data;
         const isProductInStock = stocks.some(stock => stock.producto_id === product.producto_id);
 
@@ -43,11 +43,11 @@ const ProductForm = ({ product, onClose, refreshProducts, types, catalogs, album
 
       // Si el producto ya existe, actualizamos
       if (product) {
-        await axios.put(`http://20.246.139.92/api/productos/${formData.producto_id}`, formData);
+        await axios.put(`https://20.246.139.92/api/productos/${formData.producto_id}`, formData);
         Swal.fire('Actualizado!', 'El producto ha sido actualizado.', 'success');
       } else {
         // Si el producto es nuevo, lo creamos
-        await axios.post('http://20.246.139.92/api/productos/', formData);
+        await axios.post('https://20.246.139.92/api/productos/', formData);
         Swal.fire('Guardado!', 'El producto ha sido guardado.', 'success');
       }
 

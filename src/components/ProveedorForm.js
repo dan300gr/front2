@@ -23,7 +23,7 @@ const ProveedorForm = ({ proveedor, onClose, refreshProveedores }) => {
     e.preventDefault();
 
     try {
-      const response = await axios.get('http://20.246.139.92/api/proveedores/');
+      const response = await axios.get('https://20.246.139.92/api/proveedores/');
       const existingProveedores = response.data;
 
       // Verificar si el ID ya existe en la base de datos
@@ -41,14 +41,14 @@ const ProveedorForm = ({ proveedor, onClose, refreshProveedores }) => {
       }
 
       if (proveedor) {
-        await axios.put(`http://20.246.139.92/api/proveedores/${proveedor.proveedor_id}`, formData);
+        await axios.put(`https://20.246.139.92/api/proveedores/${proveedor.proveedor_id}`, formData);
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
           text: 'Proveedor actualizado exitosamente.',
         });
       } else {
-        await axios.post('http://20.246.139.92/api/proveedores/', formData);
+        await axios.post('https://20.246.139.92/api/proveedores/', formData);
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',

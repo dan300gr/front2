@@ -21,7 +21,7 @@ const StockForm = ({ stock, onClose, refreshStocks }) => {
 
   const fetchProductos = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/productos/');
+      const response = await axios.get('https://20.246.139.92/api/productos/');
       const activos = response.data.filter(producto => producto.producto_status === 'A');
       setProductos(activos);
     } catch (error) {
@@ -44,7 +44,7 @@ const StockForm = ({ stock, onClose, refreshStocks }) => {
     try {
       // Si estamos editando un stock y se intenta desactivar, comprobamos si está asociado a algún inventario
       if (stock && formData.stock_status === 'I') {
-        const inventarioResponse = await axios.get('http://20.246.139.92/api/inventarios/'); // Asegúrate de que este endpoint sea correcto
+        const inventarioResponse = await axios.get('https://20.246.139.92/api/inventarios/'); // Asegúrate de que este endpoint sea correcto
         const inventarioItems = inventarioResponse.data;
         const isStockInInventario = inventarioItems.some(item => item.stock_id === stock.stock_id);
 
@@ -60,14 +60,14 @@ const StockForm = ({ stock, onClose, refreshStocks }) => {
 
       // Guardar o actualizar el stock
       if (stock) {
-        await axios.put(`http://20.246.139.92/api/stocks/${stock.stock_id}`, formData); // Asegúrate de que este endpoint sea correcto
+        await axios.put(`https://20.246.139.92/api/stocks/${stock.stock_id}`, formData); // Asegúrate de que este endpoint sea correcto
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
           text: 'Stock actualizado exitosamente.',
         });
       } else {
-        await axios.post('http://20.246.139.92/api/stocks/', formData); // Asegúrate de que este endpoint sea correcto
+        await axios.post('https://20.246.139.92/api/stocks/', formData); // Asegúrate de que este endpoint sea correcto
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',

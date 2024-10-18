@@ -23,7 +23,7 @@ const EdificioForm = ({ edificio, onClose, refreshEdificios }) => {
     try {
       // Si estamos editando un edificio y se intenta desactivar, comprobamos si está asociado a alguna ubicación
       if (edificio && formData.edificio_status === 'I') {
-        const ubicacionesResponse = await axios.get('http://20.246.139.92/api/ubicaciones/');
+        const ubicacionesResponse = await axios.get('https://20.246.139.92/api/ubicaciones/');
         const ubicaciones = ubicacionesResponse.data;
         const isEdificioInUbicaciones = ubicaciones.some(ubicacion => ubicacion.edificio_id === edificio.edificio_id);
 
@@ -39,14 +39,14 @@ const EdificioForm = ({ edificio, onClose, refreshEdificios }) => {
 
       // Guardar o actualizar el edificio
       if (edificio) {
-        await axios.put(`http://20.246.139.92/api/edificios/${edificio.edificio_id}`, formData);
+        await axios.put(`https://20.246.139.92/api/edificios/${edificio.edificio_id}`, formData);
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
           text: 'Edificio actualizado exitosamente.',
         });
       } else {
-        await axios.post('http://20.246.139.92/api/edificios/', formData);
+        await axios.post('https://20.246.139.92/api/edificios/', formData);
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',

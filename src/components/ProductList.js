@@ -28,7 +28,7 @@ const ProductList = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/productos/');
+      const response = await axios.get('https://20.246.139.92/api/productos/');
       setProducts(response.data);
     } catch (error) {
       console.error('Error al obtener los productos:', error);
@@ -37,7 +37,7 @@ const ProductList = () => {
 
   const fetchTypes = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/tipos-producto/');
+      const response = await axios.get('https://20.246.139.92/api/tipos-producto/');
       setTypes(response.data);
     } catch (error) {
       console.error('Error al obtener los tipos de productos:', error);
@@ -46,7 +46,7 @@ const ProductList = () => {
 
   const fetchCatalogs = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/catalogos/');
+      const response = await axios.get('https://20.246.139.92/api/catalogos/');
       setCatalogs(response.data);
     } catch (error) {
       console.error('Error al obtener los catálogos:', error);
@@ -55,7 +55,7 @@ const ProductList = () => {
 
   const fetchAlbums = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/albumes/');
+      const response = await axios.get('https://20.246.139.92/api/albumes/');
       setAlbums(response.data);
     } catch (error) {
       console.error('Error al obtener los álbumes:', error);
@@ -77,7 +77,7 @@ const ProductList = () => {
   const handleDelete = async (producto_id) => {
     try {
       // Comprobar si el producto está asociado a algún stock
-      const stockResponse = await axios.get('http://20.246.139.92/api/stocks/');
+      const stockResponse = await axios.get('https://20.246.139.92/api/stocks/');
       const stocks = stockResponse.data;
       const isProductInStock = stocks.some(stock => stock.producto_id === producto_id);
   
@@ -91,7 +91,7 @@ const ProductList = () => {
       }
   
       // Si no está en stock, proceder a eliminar el producto
-      await axios.delete(`http://20.246.139.92/api/productos/${producto_id}`);
+      await axios.delete(`https://20.246.139.92/api/productos/${producto_id}`);
       Swal.fire('Eliminado!', 'El producto ha sido eliminado.', 'success');
       fetchProducts();
     } catch (error) {

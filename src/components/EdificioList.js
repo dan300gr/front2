@@ -22,7 +22,7 @@ const EdificioList = () => {
 
   const fetchEdificios = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/edificios/');
+      const response = await axios.get('https://20.246.139.92/api/edificios/');
       setEdificios(response.data);
     } catch (error) {
       console.error('Error al obtener los edificios:', error);
@@ -44,7 +44,7 @@ const EdificioList = () => {
   const handleDelete = async (edificio_id) => {
     try {
       // Comprobar si el edificio está asociado a alguna ubicación
-      const ubicacionesResponse = await axios.get('http://20.246.139.92/api/ubicaciones/');
+      const ubicacionesResponse = await axios.get('https://20.246.139.92/api/ubicaciones/');
       const ubicaciones = ubicacionesResponse.data;
       const isEdificioInUbicaciones = ubicaciones.some(ubicacion => ubicacion.edificio_id === edificio_id);
       
@@ -57,7 +57,7 @@ const EdificioList = () => {
         return;
       }
 
-      await axios.delete(`http://20.246.139.92/api/edificios/${edificio_id}`);
+      await axios.delete(`https://20.246.139.92/api/edificios/${edificio_id}`);
       Swal.fire({
         icon: 'success',
         title: 'Edificio eliminado',
