@@ -26,14 +26,14 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productResponse = await axios.get('http://20.246.139.92/api/tipos-producto/');
-        const inventoryResponse = await axios.get('http://20.246.139.92/api/inventarios/');
-        const supplierResponse = await axios.get('http://20.246.139.92/api/proveedores/');
-        const albumResponse = await axios.get('http://20.246.139.92/api/albumes/');
-        const artistResponse = await axios.get('http://20.246.139.92/api/artistas/');
-        const stockResponse = await axios.get('http://20.246.139.92/api/stocks/');
-        const locationResponse = await axios.get('http://20.246.139.92/api/ubicaciones/');
-        const buildingResponse = await axios.get('http://20.246.139.92/api/edificios/');
+        const productResponse = await axios.get('https://api2-uetw.onrender.com/api/tipos-producto/');
+        const inventoryResponse = await axios.get('https://api2-uetw.onrender.com/api/inventarios/');
+        const supplierResponse = await axios.get('https://api2-uetw.onrender.com/api/proveedores/');
+        const albumResponse = await axios.get('https://api2-uetw.onrender.com/api/albumes/');
+        const artistResponse = await axios.get('https://api2-uetw.onrender.com/api/artistas/');
+        const stockResponse = await axios.get('https://api2-uetw.onrender.com/api/stocks/');
+        const locationResponse = await axios.get('https://api2-uetw.onrender.com/api/ubicaciones/');
+        const buildingResponse = await axios.get('https://api2-uetw.onrender.com/api/edificios/');
 
         const activos = supplierResponse.data.filter(s => s.proveedor_status === 'A');
         const inactivos = supplierResponse.data.filter(s => s.proveedor_status !== 'A');

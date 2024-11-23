@@ -18,7 +18,7 @@ const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
   useEffect(() => {
     const fetchEdificios = async () => {
       try {
-        const response = await axios.get('http://20.246.139.92/api/edificios/'); // Cambia la URL según corresponda
+        const response = await axios.get('https://api2-uetw.onrender.com/api/edificios/'); // Cambia la URL según corresponda
         setEdificios(response.data.filter(edificio => edificio.edificio_status === 'A')); // Filtrar edificios activos
       } catch (error) {
         console.error('Error al obtener edificios:', error);
@@ -38,7 +38,7 @@ const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
     try {
       // Validar si se está editando y se intenta desactivar
       if (ubicacion && formData.ubicacion_status === 'I') {
-        const inventariosResponse = await axios.get('http://20.246.139.92/api/inventarios/');
+        const inventariosResponse = await axios.get('https://api2-uetw.onrender.com/api/inventarios/');
         const inventarios = inventariosResponse.data;
         const isUbicacionInInventarios = inventarios.some(inventario => inventario.ubicacion_id === ubicacion.ubicacion_id);
 
@@ -54,14 +54,14 @@ const UbicacionForm = ({ ubicacion, onClose, refreshUbicaciones }) => {
 
       // Guardar o actualizar la ubicación
       if (ubicacion) {
-        await axios.put(`http://20.246.139.92/api/ubicaciones/${ubicacion.ubicacion_id}`, formData);
+        await axios.put(`https://api2-uetw.onrender.com/api/ubicaciones/${ubicacion.ubicacion_id}`, formData);
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
           text: 'Ubicación actualizada exitosamente.',
         });
       } else {
-        await axios.post('http://20.246.139.92/api/ubicaciones/', formData);
+        await axios.post('https://api2-uetw.onrender.com/api/ubicaciones/', formData);
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',

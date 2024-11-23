@@ -28,7 +28,7 @@ const InventarioList = () => {
 
   const fetchInventarios = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/inventarios/');
+      const response = await axios.get('https://api2-uetw.onrender.com/api/inventarios/');
       setInventarios(response.data);
     } catch (error) {
       console.error('Error al obtener los inventarios:', error);
@@ -37,7 +37,7 @@ const InventarioList = () => {
 
   const fetchProductos = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/productos/');
+      const response = await axios.get('https://api2-uetw.onrender.com/api/productos/');
       const activos = response.data.filter(producto => producto.producto_status === 'A');
       setProductos(activos);
     } catch (error) {
@@ -47,7 +47,7 @@ const InventarioList = () => {
 
   const fetchUbicaciones = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/ubicaciones/');
+      const response = await axios.get('https://api2-uetw.onrender.com/api/ubicaciones/');
       const activos = response.data.filter(ubicacion => ubicacion.ubicacion_status === 'A');
       setUbicaciones(activos);
     } catch (error) {
@@ -57,7 +57,7 @@ const InventarioList = () => {
 
   const fetchStocks = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/stocks/');
+      const response = await axios.get('https://api2-uetw.onrender.com/api/stocks/');
       const activos = response.data.filter(stock => stock.stock_status === 'A');
       setStocks(activos);
     } catch (error) {
@@ -79,7 +79,7 @@ const InventarioList = () => {
 
   const handleDelete = async (inventario_id) => {
     try {
-      await axios.delete(`http://20.246.139.92/api/inventarios/${inventario_id}`);
+      await axios.delete(`https://api2-uetw.onrender.com/api/inventarios/${inventario_id}`);
       Swal.fire({
         icon: 'success',
         title: 'Inventario eliminado',

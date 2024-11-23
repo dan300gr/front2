@@ -23,7 +23,7 @@ const ArtistForm = ({ artist, onClose, refreshArtists }) => {
 
     // Validación de ID existente
     try {
-      const response = await axios.get('http://20.246.139.92/api/artistas/');
+      const response = await axios.get('https://api2-uetw.onrender.com/api/artistas/');
       const existingArtists = response.data;
 
       // Verificar si el ID ya existe en la base de datos
@@ -42,7 +42,7 @@ const ArtistForm = ({ artist, onClose, refreshArtists }) => {
 
       // Si estamos editando un artista y se intenta desactivar, comprobamos si está asociado a un álbum
       if (artist && formData.artista_status === 'I') {
-        const albumsResponse = await axios.get('http://20.246.139.92/api/albumes/');
+        const albumsResponse = await axios.get('https://api2-uetw.onrender.com/api/albumes/');
         const albums = albumsResponse.data;
         const isArtistInAlbums = albums.some(album => album.artista_id === artist.artista_id);
 
@@ -57,14 +57,14 @@ const ArtistForm = ({ artist, onClose, refreshArtists }) => {
       }
 
       if (artist) {
-        await axios.put(`http://20.246.139.92/api/artistas/${artist.artista_id}`, formData);
+        await axios.put(`https://api2-uetw.onrender.com/api/artistas/${artist.artista_id}`, formData);
         Swal.fire({
           icon: 'success',
           title: 'Actualización Exitosa',
           text: 'Artista actualizado exitosamente.',
         });
       } else {
-        await axios.post('http://20.246.139.92/api/artistas/', formData);
+        await axios.post('https://api2-uetw.onrender.com/api/artistas/', formData);
         Swal.fire({
           icon: 'success',
           title: 'Guardado Exitoso',

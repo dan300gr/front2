@@ -22,7 +22,7 @@ const CatalogList = () => {
 
   const fetchCatalogos = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/catalogos/');
+      const response = await axios.get('https://api2-uetw.onrender.com/api/catalogos/');
       setCatalogos(response.data);
     } catch (error) {
       console.error('Error al obtener los catálogos:', error);
@@ -44,7 +44,7 @@ const CatalogList = () => {
   const handleDelete = async (catalogo_id) => {
     try {
       // Comprobar si el catálogo está asociado a algún producto
-      const productsResponse = await axios.get('http://20.246.139.92/api/productos/');
+      const productsResponse = await axios.get('https://api2-uetw.onrender.com/api/productos/');
       const products = productsResponse.data;
       const isCatalogInProducts = products.some(product => product.catalogo_id === catalogo_id);
       
@@ -57,7 +57,7 @@ const CatalogList = () => {
         return;
       }
 
-      await axios.delete(`http://20.246.139.92/api/catalogos/${catalogo_id}`);
+      await axios.delete(`https://api2-uetw.onrender.com/api/catalogos/${catalogo_id}`);
       Swal.fire({
         icon: 'success',
         title: 'Catálogo eliminado',

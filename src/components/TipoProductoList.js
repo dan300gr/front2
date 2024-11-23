@@ -27,7 +27,7 @@ const TipoProductoList = () => {
 
   const fetchTiposProductos = async () => {
     try {
-      const response = await axios.get('http://20.246.139.92/api/tipos-producto/');
+      const response = await axios.get('https://api2-uetw.onrender.com/api/tipos-producto/');
       setTiposProductos(response.data);
     } catch (error) {
       console.error('Error al obtener los tipos de productos:', error);
@@ -49,7 +49,7 @@ const TipoProductoList = () => {
   const handleDelete = async (tipo_id) => {
     try {
       // Verificar si el tipo de producto está asociado a algún producto
-      const productsResponse = await axios.get('http://20.246.139.92/api/productos/');
+      const productsResponse = await axios.get('https://api2-uetw.onrender.com/api/productos/');
       const products = productsResponse.data;
       const isTipoInProducts = products.some(product => product.tipo_id === tipo_id);
 
@@ -62,7 +62,7 @@ const TipoProductoList = () => {
         return;
       }
 
-      await axios.delete(`http://20.246.139.92/api/tipos-producto/${tipo_id}`);
+      await axios.delete(`https://api2-uetw.onrender.com/api/tipos-producto/${tipo_id}`);
       Swal.fire({
         icon: 'success',
         title: 'Tipo de Producto eliminado',

@@ -23,7 +23,7 @@ const AlbumForm = ({ album, onClose, refreshAlbums, artistas }) => {
     try {
       // Si se intenta cambiar el estado a inactivo
       if (album && formData.album_status === 'I') {
-        const productsResponse = await axios.get('http://20.246.139.92/api/productos/');
+        const productsResponse = await axios.get('https://api2-uetw.onrender.com/api/productos/');
         const products = productsResponse.data;
         const isAlbumInProducts = products.some(product => product.album_id === album.album_id);
 
@@ -34,10 +34,10 @@ const AlbumForm = ({ album, onClose, refreshAlbums, artistas }) => {
       }
 
       if (album) {
-        await axios.put(`http://20.246.139.92/api/albumes/${formData.album_id}`, formData);
+        await axios.put(`https://api2-uetw.onrender.com/api/albumes/${formData.album_id}`, formData);
         Swal.fire('Actualizado!', 'El álbum ha sido actualizado.', 'success');
       } else {
-        await axios.post('http://20.246.139.92/api/albumes/', formData);
+        await axios.post('https://api2-uetw.onrender.com/api/albumes/', formData);
         Swal.fire('Guardado!', 'El álbum ha sido guardado.', 'success');
       }
       refreshAlbums();
