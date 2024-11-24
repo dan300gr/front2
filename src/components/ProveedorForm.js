@@ -15,31 +15,50 @@ const ProveedorForm = ({ proveedor, onClose, refreshProveedores }) => {
     proveedor_status: proveedor ? proveedor.proveedor_status : 'A',
   });
 
+  const [estados, setEstados] = useState([]);
+  const [ciudades, setCiudades] = useState([]);
+  const [selectedEstado, setSelectedEstado] = useState('');
+  const [selectedCiudad, setSelectedCiudad] = useState('');
+
+  useEffect(() => {
+    fetchEstados();
+  }, []);
+
+  useEffect(() => {
+    if (selectedEstado) {
+      const estadoSeleccionado = estados.find(estado => estado.estado_id === parseInt(selectedEstado));
+      if (estadoSeleccionado) {
+        setCiudades([{ ciudad_descripcion: estadoSeleccionado.ciudad_descripcion }]);
+      }
+    }
+  }, [selectedEstado, estados]);
+
+  const fetchEstados = async () => {
+    try {
+      const response = await axios.get('http://34.134.65.19:5001/estados/api/estados');
+      setEstados(response.data);
+    } catch (error) {
+      console.error('Error al obtener los estados:', error);
+    }
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleEstadoChange = (e) => {
+    setSelectedEstado(e.target.value);
+    setSelectedCiudad('');
+  };
+
+  const handleCiudadChange = (e) => {
+    setSelectedCiudad(e.target.value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.get('https://api2-uetw.onrender.com/api/proveedores/');
-      const existingProveedores = response.data;
-
-      // Verificar si el ID ya existe en la base de datos
-      const idExists = existingProveedores.some(
-        (prov) => prov.proveedor_id === formData.proveedor_id && prov.proveedor_id !== (proveedor ? proveedor.proveedor_id : null)
-      );
-
-      if (idExists) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Advertencia',
-          text: 'Ya existe un proveedor con ese ID.',
-        });
-        return;
-      }
-
       if (proveedor) {
         await axios.put(`https://api2-uetw.onrender.com/api/proveedores/${proveedor.proveedor_id}`, formData);
         Swal.fire({
@@ -63,36 +82,23 @@ const ProveedorForm = ({ proveedor, onClose, refreshProveedores }) => {
       Swal.fire({
         icon: 'warning',
         title: 'Error',
-        text: 'Ya existe un proveedor con ese ID.',
+        text: 'No se puede guardar un proveedor con el mismo ID.',
       });
     }
   };
-
-  useEffect(() => {
-    if (proveedor) {
-      setFormData({
-        proveedor_id: proveedor.proveedor_id,
-        proveedor_nombre: proveedor.proveedor_nombre,
-        proveedor_direccion: proveedor.proveedor_direccion,
-        proveedor_telefono: proveedor.proveedor_telefono,
-        proveedor_correo: proveedor.proveedor_correo,
-        proveedor_status: proveedor.proveedor_status,
-      });
-    }
-  }, [proveedor]);
 
   return (
     <Form onSubmit={handleSubmit}>
       <Form.Group className="mb-3">
         <Form.Label>ID del Proveedor</Form.Label>
         <Form.Control
-          type="text"
+          type="number"
           name="proveedor_id"
           value={formData.proveedor_id}
           onChange={handleChange}
           placeholder="Ingrese el ID del proveedor"
           required
-          disabled={!!proveedor} // Disable ID input when editing
+          disabled={!!proveedor}
         />
       </Form.Group>
       <Form.Group className="mb-3">
@@ -107,6 +113,37 @@ const ProveedorForm = ({ proveedor, onClose, refreshProveedores }) => {
         />
       </Form.Group>
       <Form.Group className="mb-3">
+        <Form.Label>Estado</Form.Label>
+        <Form.Control 
+          as="select" 
+          value={selectedEstado} 
+          onChange={handleEstadoChange}
+        >
+          <option value="">Seleccione un estado</option>
+          {estados.map((estado) => (
+            <option key={estado.estado_id} value={estado.estado_id}>
+              {estado.estado_descripcion}
+            </option>
+          ))}
+        </Form.Control>
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Ciudad</Form.Label>
+        <Form.Control 
+          as="select" 
+          value={selectedCiudad} 
+          onChange={handleCiudadChange}
+          disabled={!selectedEstado}
+        >
+          <option value="">Seleccione una ciudad</option>
+          {ciudades.map((ciudad, index) => (
+            <option key={index} value={ciudad.ciudad_descripcion}>
+              {ciudad.ciudad_descripcion}
+            </option>
+          ))}
+        </Form.Control>
+      </Form.Group>
+      <Form.Group className="mb-3">
         <Form.Label>Dirección</Form.Label>
         <Form.Control
           type="text"
@@ -114,7 +151,6 @@ const ProveedorForm = ({ proveedor, onClose, refreshProveedores }) => {
           value={formData.proveedor_direccion}
           onChange={handleChange}
           placeholder="Ingrese la dirección del proveedor"
-          required
         />
       </Form.Group>
       <Form.Group className="mb-3">
@@ -125,7 +161,6 @@ const ProveedorForm = ({ proveedor, onClose, refreshProveedores }) => {
           value={formData.proveedor_telefono}
           onChange={handleChange}
           placeholder="Ingrese el teléfono del proveedor"
-          required
         />
       </Form.Group>
       <Form.Group className="mb-3">
@@ -136,7 +171,6 @@ const ProveedorForm = ({ proveedor, onClose, refreshProveedores }) => {
           value={formData.proveedor_correo}
           onChange={handleChange}
           placeholder="Ingrese el correo del proveedor"
-          required
         />
       </Form.Group>
       <Form.Group className="mb-3">
@@ -157,3 +191,4 @@ const ProveedorForm = ({ proveedor, onClose, refreshProveedores }) => {
 };
 
 export default ProveedorForm;
+

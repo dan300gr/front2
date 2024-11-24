@@ -58,9 +58,9 @@ const CatalogForm = ({ catalogo, onClose, refreshCatalogos }) => {
     } catch (error) {
       console.error('Error al guardar el catálogo:', error);
       Swal.fire({
-        icon: 'error',
+        icon: 'Warning',
         title: 'Error',
-        text: 'Error al guardar el catálogo.',
+        text: 'No se puede guardar un catálogo con el mismo ID.',
       });
     }
   };

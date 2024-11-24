@@ -106,9 +106,9 @@ const InventarioForm = ({ inventario, onClose, refreshInventarios }) => {
     } catch (error) {
       console.error('Error al guardar el inventario:', error);
       Swal.fire({
-        icon: 'error',
+        icon: 'Warning',
         title: 'Error',
-        text: 'Error al guardar el inventario.',
+        text: 'No se puede guardar un inventario con el mismo ID.',
       });
     }
   };

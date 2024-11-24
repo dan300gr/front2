@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Form, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,17 +11,71 @@ const EdificioForm = ({ edificio, onClose, refreshEdificios }) => {
     edificio_nombre: edificio ? edificio.edificio_nombre : '',
     edificio_direccion: edificio ? edificio.edificio_direccion : '',
     edificio_status: edificio ? edificio.edificio_status : 'A',
+    pais_descripcion: '',
+    estado_descripcion: '',
+    ciudad_descripcion: '',
   });
 
+  const [paises, setPaises] = useState([]);
+  const [estados, setEstados] = useState([]);
+  const [ciudades, setCiudades] = useState([]);
+  const [estadosFiltrados, setEstadosFiltrados] = useState([]);
+  const [ciudadesFiltradas, setCiudadesFiltradas] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [ciudadesResponse, estadosResponse] = await Promise.all([
+          axios.get('http://34.134.65.19:5001/ciudades/api/ciudades'),
+          axios.get('http://34.134.65.19:5001/estados/api/estados')
+        ]);
+
+        const ciudadesData = ciudadesResponse.data;
+        const estadosData = estadosResponse.data;
+
+        // Extraer países únicos
+        const paisesUnicos = [...new Set(ciudadesData.map(ciudad => ciudad.pais_descripcion))];
+        setPaises(paisesUnicos);
+
+        setEstados(estadosData);
+        setCiudades(ciudadesData);
+      } catch (error) {
+        console.error('Error al obtener datos:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo obtener la información de países, estados y ciudades.',
+        });
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    if (name === 'pais_descripcion') {
+      const estadosFiltrados = estados.filter(estado => 
+        ciudades.some(ciudad => ciudad.pais_descripcion === value && ciudad.ciudad_descripcion === estado.ciudad_descripcion)
+      );
+      setEstadosFiltrados(estadosFiltrados);
+      setFormData(prev => ({ ...prev, estado_descripcion: '', ciudad_descripcion: '' }));
+    } else if (name === 'estado_descripcion') {
+      const ciudadesFiltradas = ciudades.filter(ciudad => 
+        ciudad.pais_descripcion === formData.pais_descripcion && 
+        estados.some(estado => estado.estado_descripcion === value && estado.ciudad_descripcion === ciudad.ciudad_descripcion)
+      );
+      setCiudadesFiltradas(ciudadesFiltradas);
+      setFormData(prev => ({ ...prev, ciudad_descripcion: '' }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      // Si estamos editando un edificio y se intenta desactivar, comprobamos si está asociado a alguna ubicación
       if (edificio && formData.edificio_status === 'I') {
         const ubicacionesResponse = await axios.get('https://api2-uetw.onrender.com/api/ubicaciones/');
         const ubicaciones = ubicacionesResponse.data;
@@ -37,7 +91,6 @@ const EdificioForm = ({ edificio, onClose, refreshEdificios }) => {
         }
       }
 
-      // Guardar o actualizar el edificio
       if (edificio) {
         await axios.put(`https://api2-uetw.onrender.com/api/edificios/${edificio.edificio_id}`, formData);
         Swal.fire({
@@ -59,9 +112,9 @@ const EdificioForm = ({ edificio, onClose, refreshEdificios }) => {
     } catch (error) {
       console.error('Error al guardar el edificio:', error);
       Swal.fire({
-        icon: 'error',
+        icon: 'warning',
         title: 'Error',
-        text: 'Error al guardar el edificio.',
+        text: 'No se puede guardar un edificio con el mismo ID.',
       });
     }
   };
@@ -77,7 +130,7 @@ const EdificioForm = ({ edificio, onClose, refreshEdificios }) => {
           onChange={handleChange}
           placeholder="Ingrese el ID del edificio"
           required
-          disabled={!!edificio} // Deshabilita el ID si se está editando
+          disabled={!!edificio}
         />
       </Form.Group>
       <Form.Group className="mb-3">
@@ -90,6 +143,33 @@ const EdificioForm = ({ edificio, onClose, refreshEdificios }) => {
           placeholder="Ingrese el nombre del edificio"
           required
         />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>País</Form.Label>
+        <Form.Control as="select" name="pais_descripcion" value={formData.pais_descripcion} onChange={handleChange}>
+          <option value="">Seleccione un país</option>
+          {paises.map((pais, index) => (
+            <option key={index} value={pais}>{pais}</option>
+          ))}
+        </Form.Control>
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Estado</Form.Label>
+        <Form.Control as="select" name="estado_descripcion" value={formData.estado_descripcion} onChange={handleChange} disabled={!formData.pais_descripcion}>
+          <option value="">Seleccione un estado</option>
+          {estadosFiltrados.map((estado, index) => (
+            <option key={index} value={estado.estado_descripcion}>{estado.estado_descripcion}</option>
+          ))}
+        </Form.Control>
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Ciudad</Form.Label>
+        <Form.Control as="select" name="ciudad_descripcion" value={formData.ciudad_descripcion} onChange={handleChange} disabled={!formData.estado_descripcion}>
+          <option value="">Seleccione una ciudad</option>
+          {ciudadesFiltradas.map((ciudad, index) => (
+            <option key={index} value={ciudad.ciudad_descripcion}>{ciudad.ciudad_descripcion}</option>
+          ))}
+        </Form.Control>
       </Form.Group>
       <Form.Group className="mb-3">
         <Form.Label>Dirección</Form.Label>
@@ -119,3 +199,4 @@ const EdificioForm = ({ edificio, onClose, refreshEdificios }) => {
 };
 
 export default EdificioForm;
+

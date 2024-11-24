@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar, Nav, Button, Container } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import { faSun, faMoon, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 
 const MyNavbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const navigate = useNavigate();
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -18,6 +19,11 @@ const MyNavbar = () => {
       document.body.classList.remove('dark-mode');
     }
   }, [isDarkMode]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
 
   return (
     <Navbar
@@ -40,7 +46,7 @@ const MyNavbar = () => {
           />
           Tienda Música
         </Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+<Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mr-auto">
             <Nav.Link as={Link} to="/productos">Productos</Nav.Link>
@@ -57,12 +63,20 @@ const MyNavbar = () => {
           <Button
             variant={isDarkMode ? 'light' : 'dark'}
             onClick={toggleTheme}
-            style={{ marginLeft: '10px', marginRight: '10px' }} // Espacio añadido
+            style={{ marginLeft: '10px', marginRight: '10px' }}
           >
             <FontAwesomeIcon
               icon={isDarkMode ? faSun : faMoon}
               style={{ margin: '0 5px' }}
             />
+          </Button>
+          <Button
+            variant="outline-danger"
+            onClick={handleLogout}
+            style={{ marginLeft: '10px' }}
+          >
+            <FontAwesomeIcon icon={faSignOutAlt} style={{ marginRight: '5px' }} />
+            Cerrar sesión
           </Button>
         </Navbar.Collapse>
       </Container>
@@ -71,3 +85,4 @@ const MyNavbar = () => {
 };
 
 export default MyNavbar;
+

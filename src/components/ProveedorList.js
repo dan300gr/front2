@@ -15,9 +15,11 @@ const ProveedorList = () => {
   const [sortBy, setSortBy] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [estados, setEstados] = useState([]);
 
   useEffect(() => {
     fetchProveedores();
+    fetchEstados();
   }, []);
 
   const fetchProveedores = async () => {
@@ -26,6 +28,15 @@ const ProveedorList = () => {
       setProveedores(response.data);
     } catch (error) {
       console.error('Error al obtener los proveedores:', error);
+    }
+  };
+
+  const fetchEstados = async () => {
+    try {
+      const response = await axios.get('http://34.134.65.19:5001/estados/api/estados');
+      setEstados(response.data);
+    } catch (error) {
+      console.error('Error al obtener los estados:', error);
     }
   };
 
@@ -148,6 +159,9 @@ const ProveedorList = () => {
           <tr>
             <th>ID</th>
             <th>Nombre</th>
+            <th>Dirección</th>
+            <th>Teléfono</th>
+            <th>Correo</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
@@ -157,6 +171,9 @@ const ProveedorList = () => {
             <tr key={proveedor.proveedor_id}>
               <td>{proveedor.proveedor_id}</td>
               <td>{proveedor.proveedor_nombre}</td>
+              <td>{proveedor.proveedor_direccion}</td>
+              <td>{proveedor.proveedor_telefono}</td>
+              <td>{proveedor.proveedor_correo}</td>
               <td>{proveedor.proveedor_status === 'A' ? 'Activo' : 'Inactivo'}</td>
               <td>
                 <Button variant="info" onClick={() => handleEdit(proveedor)}>
@@ -210,12 +227,17 @@ const ProveedorList = () => {
         </ul>
       </nav>
 
-      <Modal show={showModal} onHide={handleCloseModal}>
+      <Modal show={showModal} onHide={handleCloseModal} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>{editingProveedor ? 'Editar Proveedor' : 'Agregar Proveedor'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <ProveedorForm proveedor={editingProveedor} onClose={handleCloseModal} refreshProveedores={fetchProveedores} />
+          <ProveedorForm 
+            proveedor={editingProveedor} 
+            onClose={handleCloseModal} 
+            refreshProveedores={fetchProveedores} 
+            estados={estados}
+          />
         </Modal.Body>
       </Modal>
     </div>
@@ -223,3 +245,5 @@ const ProveedorList = () => {
 };
 
 export default ProveedorList;
+
+
