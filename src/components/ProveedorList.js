@@ -33,7 +33,7 @@ const ProveedorList = () => {
 
   const fetchEstados = async () => {
     try {
-      const response = await axios.get('http://34.134.65.19:5001/estados/api/estados');
+      const response = await axios.get('https://34.134.65.19:5001/estados/api/estados');
       setEstados(response.data);
     } catch (error) {
       console.error('Error al obtener los estados:', error);

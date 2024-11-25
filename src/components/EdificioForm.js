@@ -26,8 +26,8 @@ const EdificioForm = ({ edificio, onClose, refreshEdificios }) => {
     const fetchData = async () => {
       try {
         const [ciudadesResponse, estadosResponse] = await Promise.all([
-          axios.get('http://34.134.65.19:5001/ciudades/api/ciudades'),
-          axios.get('http://34.134.65.19:5001/estados/api/estados')
+          axios.get('https://34.134.65.19:5001/ciudades/api/ciudades'),
+          axios.get('https://34.134.65.19:5001/estados/api/estados')
         ]);
 
         const ciudadesData = ciudadesResponse.data;
