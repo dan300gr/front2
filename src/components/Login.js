@@ -14,7 +14,7 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await axios.get('https://34.134.65.19:5001/usuarios/api/usuarios');
+      const response = await axios.get('https://beatverse.onrender.com/usuarios/api/usuarios');
       const users = response.data;
 
       const user = users.find(
